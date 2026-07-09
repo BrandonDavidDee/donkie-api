@@ -1,0 +1,9 @@
+{
+  "stubPath": "typings",
+  "include": [
+    "app",
+    "tests"
+  ],
+  "typeCheckingMode": "standard"
+}
+
