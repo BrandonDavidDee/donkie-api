@@ -17,3 +17,14 @@ dev = [
     "pyright>=1.1.411",
     "pytest>=9.1.1",
 ]
+
+[tool.ruff]
+extend-exclude = ["app/schema.py"]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["I"]
+
+[tool.ruff.lint.isort]
+# isort-compatible config here if needed
+known-first-party = ["app"]
