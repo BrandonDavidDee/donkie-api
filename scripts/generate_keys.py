@@ -7,8 +7,8 @@ The purpose of base64 encoding is for storing a multi line private_pem key as an
 """
 import base64
 
-from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec
 
 # 1. Generate the private key — this stays on the consuming app's server, forever.
 private_key = ec.generate_private_key(ec.SECP256R1())
