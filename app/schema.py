@@ -16,23 +16,69 @@ Base = declarative_base()
 metadata = Base.metadata
 
 
+class App(Base):
+    __tablename__ = "apps"
+
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
+    name = Column(Text, nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+
+    keys = relationship("AppKey", back_populates="app", cascade="all, delete-orphan")
+
+
+class AppKey(Base):
+    __tablename__ = "app_keys"
+
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
+    app_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("apps.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    public_key = Column(Text, nullable=False)
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+
+    app = relationship("App", back_populates="keys")
+
+    __table_args__ = (Index("idx_app_keys_app_id", "app_id"),)
+
+
 class Conversation(Base):
     __tablename__ = "conversations"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
     tenant_id = Column(Text, nullable=False)
     title = Column(Text, nullable=True)
     created_by = Column(Text, nullable=False)  # opaque user_id, not a FK
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
     archived_at = Column(DateTime(timezone=True), nullable=True)  # soft delete/close
 
-    tags = relationship("ConversationTag", back_populates="conversation", cascade="all, delete-orphan")
-    participants = relationship("Participant", back_populates="conversation", cascade="all, delete-orphan")
-    messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
-
-    __table_args__ = (
-        Index("idx_conversations_tenant", "tenant_id"),
+    tags = relationship(
+        "ConversationTag", back_populates="conversation", cascade="all, delete-orphan"
     )
+    participants = relationship(
+        "Participant", back_populates="conversation", cascade="all, delete-orphan"
+    )
+    messages = relationship(
+        "Message", back_populates="conversation", cascade="all, delete-orphan"
+    )
+
+    __table_args__ = (Index("idx_conversations_tenant", "tenant_id"),)
 
 
 class ConversationTag(Base):
@@ -41,6 +87,7 @@ class ConversationTag(Base):
     tag_key/tag_value examples: ("event", "4291"), ("date", "2026-08-14"), ("assignment", "882").
     Composite PK prevents duplicate tags on the same conversation.
     """
+
     __tablename__ = "conversation_tags"
 
     conversation_id = Column(
@@ -52,7 +99,9 @@ class ConversationTag(Base):
     tag_key = Column(Text, primary_key=True, nullable=False)
     tag_value = Column(Text, primary_key=True, nullable=False)
     tenant_id = Column(Text, nullable=False)  # denormalized for fast scoped lookups
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
 
     conversation = relationship("Conversation", back_populates="tags")
 
@@ -67,6 +116,7 @@ class Participant(Base):
     Membership/roster data — distinct from JWT scope.
     Used for read receipts, member lists, and notification targeting.
     """
+
     __tablename__ = "participants"
 
     conversation_id = Column(
@@ -75,16 +125,18 @@ class Participant(Base):
         primary_key=True,
         nullable=False,
     )
-    user_id = Column(Text, primary_key=True, nullable=False)  # opaque, defined by host app
+    user_id = Column(
+        Text, primary_key=True, nullable=False
+    )  # opaque, defined by host app
     tenant_id = Column(Text, nullable=False)
     last_read_at = Column(DateTime(timezone=True), nullable=True)  # null = never read
-    joined_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    joined_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
 
     conversation = relationship("Conversation", back_populates="participants")
 
-    __table_args__ = (
-        Index("idx_participants_user", "tenant_id", "user_id"),
-    )
+    __table_args__ = (Index("idx_participants_user", "tenant_id", "user_id"),)
 
 
 class Message(Base):
@@ -98,9 +150,12 @@ class Message(Base):
     - parent_message_id points to the parent message when this is a reply.
     - reply_count caches how many direct replies a message has.
     """
+
     __tablename__ = "messages"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    id = Column(
+        UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid()
+    )
     conversation_id = Column(
         UUID(as_uuid=True),
         ForeignKey("conversations.id", ondelete="CASCADE"),
@@ -112,16 +167,22 @@ class Message(Base):
         nullable=True,
     )
     tenant_id = Column(Text, nullable=False)
-    sender_id = Column(Text, nullable=False)           # opaque user_id
-    sender_display_name = Column(Text, nullable=False) # snapshot at send-time
+    sender_id = Column(Text, nullable=False)  # opaque user_id
+    sender_display_name = Column(Text, nullable=False)  # snapshot at send-time
     body = Column(Text, nullable=False)
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
     edited_at = Column(DateTime(timezone=True), nullable=True)
-    deleted_at = Column(DateTime(timezone=True), nullable=True)  # soft delete, keeps thread intact
+    deleted_at = Column(
+        DateTime(timezone=True), nullable=True
+    )  # soft delete, keeps thread intact
     reply_count = Column(Integer, nullable=False, default=0, server_default="0")
 
     conversation = relationship("Conversation", back_populates="messages")
-    mentions = relationship("MessageMention", back_populates="message", cascade="all, delete-orphan")
+    mentions = relationship(
+        "MessageMention", back_populates="message", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         # Hot path: messages for conversation X, paginated by time
@@ -135,6 +196,7 @@ class MessageMention(Base):
     "who was mentioned" or "what am I mentioned in."
     Composite PK on (message_id, user_id) prevents duplicate mentions per message.
     """
+
     __tablename__ = "message_mentions"
 
     message_id = Column(
@@ -143,13 +205,15 @@ class MessageMention(Base):
         primary_key=True,
         nullable=False,
     )
-    user_id = Column(Text, primary_key=True, nullable=False)  # same id space as participants.user_id
+    user_id = Column(
+        Text, primary_key=True, nullable=False
+    )  # same id space as participants.user_id
     tenant_id = Column(Text, nullable=False)
     mentioned_display_name = Column(Text, nullable=False)  # snapshot at send-time
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    created_at = Column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
 
     message = relationship("Message", back_populates="mentions")
 
-    __table_args__ = (
-        Index("idx_mentions_user", "tenant_id", "user_id"),
-    )
+    __table_args__ = (Index("idx_mentions_user", "tenant_id", "user_id"),)
