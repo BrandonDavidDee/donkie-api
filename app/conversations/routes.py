@@ -1,7 +1,9 @@
-from asyncpg import Record
-from fastapi import APIRouter
 from uuid import UUID
 
+from asyncpg import Record
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from app.authorization.claims import get_token_claims
 from app.db import db
 
 from .models import ConversationCreate, ConversationRead, ConversationTagRead
@@ -25,9 +27,11 @@ async def conversation_create(payload: ConversationCreate) -> ConversationRead:
     conversation_id = row["id"]
     new_tags: list[ConversationTagRead] = []
     for tag in payload.tags:
-        tag_query = ("INSERT INTO conversation_tags "
-                     "(conversation_id, tag_key, tag_value, tenant_id) "
-                     "VALUES ($1, $2, $3, $4) RETURNING *")
+        tag_query = (
+            "INSERT INTO conversation_tags "
+            "(conversation_id, tag_key, tag_value, tenant_id) "
+            "VALUES ($1, $2, $3, $4) RETURNING *"
+        )
         tag_values = (conversation_id, tag.tag_key, tag.tag_value, tenant_id)
         tag_row: Record = await db.insert(tag_query, tag_values)
         new_tag = ConversationTagRead(
@@ -48,17 +52,27 @@ async def conversation_create(payload: ConversationCreate) -> ConversationRead:
 
 
 @router.get("")
-async def get_conversations():
+async def get_conversations(
+    tags: list[str] = Query(), claims=Depends(get_token_claims)
+):
+    for t in tags:
+        if t not in claims["scope"]:
+            raise HTTPException(403, f"Scope does not permit tag '{t}'")
+
     query = """
     SELECT * FROM conversations c
     JOIN conversation_tags ct ON ct.conversation_id = c.id
     WHERE ct.tenant_id = $1 AND (ct.tag_key || ':' || ct.tag_value) = ANY($2)  
     """
     tenant_id = "foo:bar"
-    tag = "event:123"
-    values = (tenant_id, [tag])
+    # tag = "event:123"
+    values = (tenant_id, tags)
     result: list[Record] = await db.select_many(query, values)
     output: list[UUID] = []
     for row in result:
         output.append(row["id"])
-    return output
+    return {
+        "tags": tags,
+        "output": output,
+        "claims": claims,
+    }
