@@ -1,6 +1,6 @@
-from asyncpg import Record
-from fastapi import APIRouter, HTTPException, Depends
 import jwt
+from asyncpg import Record
+from fastapi import APIRouter, Depends, HTTPException
 
 from app.db import db
 
@@ -11,7 +11,10 @@ async def authenticate(token: str) -> dict:
     header = jwt.get_unverified_header(token)
     kid = header["kid"]
     #
-    row = await db.select_one("SELECT app_id, public_key FROM app_keys WHERE id = $1 AND revoked_at IS NULL", (kid,))
+    row = await db.select_one(
+        "SELECT app_id, public_key FROM app_keys WHERE id = $1 AND revoked_at IS NULL",
+        (kid,),
+    )
     if not row:
         raise HTTPException(401, "Unknown or revoked key")
 
@@ -22,6 +25,7 @@ async def authenticate(token: str) -> dict:
         raise HTTPException(403, "Token app/tenant mismatch")
 
     return claims
+
 
 @router.get("/")
 async def app_root() -> dict:
@@ -35,5 +39,5 @@ async def app_root() -> dict:
 
 
 @router.get("/whoami")
-async def whoami(claims = Depends(authenticate)):
+async def whoami(claims=Depends(authenticate)):
     return claims

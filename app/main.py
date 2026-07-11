@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.conf import ALLOW_ORIGIN_REGEX, ALLOW_ORIGINS
+from app.conversations.routes import router as conversations
 from app.db import db
 from app.root_route import router as root_router
 
@@ -33,6 +34,7 @@ def configure_middleware(event_run_api: FastAPI) -> None:
 
 def register_routers(event_run_api: FastAPI) -> None:
     event_run_api.include_router(root_router, prefix="")
+    event_run_api.include_router(conversations, prefix="/conversations")
 
 
 def create_app() -> FastAPI:
