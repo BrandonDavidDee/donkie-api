@@ -1,5 +1,6 @@
 from asyncpg import Record
 from fastapi import APIRouter
+from uuid import UUID
 
 from app.db import db
 
@@ -44,3 +45,20 @@ async def conversation_create(payload: ConversationCreate) -> ConversationRead:
         archived_at=row["archived_at"],
         tags=new_tags,
     )
+
+
+@router.get("")
+async def get_conversations():
+    query = """
+    SELECT * FROM conversations c
+    JOIN conversation_tags ct ON ct.conversation_id = c.id
+    WHERE ct.tenant_id = $1 AND (ct.tag_key || ':' || ct.tag_value) = ANY($2)  
+    """
+    tenant_id = "foo:bar"
+    tag = "event:123"
+    values = (tenant_id, [tag])
+    result: list[Record] = await db.select_many(query, values)
+    output: list[UUID] = []
+    for row in result:
+        output.append(row["id"])
+    return output
