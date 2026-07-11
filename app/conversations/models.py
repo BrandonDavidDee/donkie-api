@@ -1,7 +1,20 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+
+class ConversationTagBase(BaseModel):
+    tag_key: str
+    tag_value: str
+
+
+class ConversationTagCreate(ConversationTagBase):
+    pass
+
+
+class ConversationTagRead(ConversationTagBase):
+    created_at: datetime
 
 
 class ConversationBase(BaseModel):
@@ -9,7 +22,7 @@ class ConversationBase(BaseModel):
 
 
 class ConversationCreate(ConversationBase):
-    pass
+    tags: list[ConversationTagCreate] = Field(default_factory=list)
 
 
 class ConversationRead(ConversationBase):
@@ -17,6 +30,7 @@ class ConversationRead(ConversationBase):
     created_by: str
     created_at: datetime
     archived_at: datetime | None
+    tags: list[ConversationTagRead] = Field(default_factory=list)
 
 
 class ConversationUpdate(ConversationBase):

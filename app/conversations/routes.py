@@ -1,9 +1,9 @@
 from asyncpg import Record
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter
 
 from app.db import db
 
-from .models import ConversationCreate, ConversationRead
+from .models import ConversationCreate, ConversationRead, ConversationTagRead
 
 router = APIRouter()
 
@@ -21,10 +21,26 @@ async def conversation_create(payload: ConversationCreate) -> ConversationRead:
             created_by,
         ),
     )
+    conversation_id = row["id"]
+    new_tags: list[ConversationTagRead] = []
+    for tag in payload.tags:
+        tag_query = ("INSERT INTO conversation_tags "
+                     "(conversation_id, tag_key, tag_value, tenant_id) "
+                     "VALUES ($1, $2, $3, $4) RETURNING *")
+        tag_values = (conversation_id, tag.tag_key, tag.tag_value, tenant_id)
+        tag_row: Record = await db.insert(tag_query, tag_values)
+        new_tag = ConversationTagRead(
+            tag_key=tag_row["tag_key"],
+            tag_value=tag_row["tag_value"],
+            created_at=tag_row["created_at"],
+        )
+        new_tags.append(new_tag)
+
     return ConversationRead(
-        id=row["id"],
+        id=conversation_id,
         title=row["title"],
         created_by=row["created_by"],
         created_at=row["created_at"],
         archived_at=row["archived_at"],
+        tags=new_tags,
     )
