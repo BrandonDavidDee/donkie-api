@@ -15,6 +15,32 @@ class BaseController(ABC):
         self.db: Database = db
         self.now = datetime.now(tz=timezone.utc)
 
+    def can_create_with_tags(self, tags: list[str]) -> bool:
+        """
+        ALL tags must have 'create' permission. Used when a request is
+        ATTACHING multiple tags to one new object — no partial matches allowed.
+        """
+        granted = set(self.scope)
+        for tag in tags:
+            if f"*:create" in granted:
+                continue
+            if f"{tag}:create" not in granted:
+                return False
+        return True
+
+    def has_permission_any(self, tags: list[str], action: str) -> bool:
+        """
+        ANY tag having the permission is enough. Used when checking access
+        to something that already exists via one or more paths (tags).
+        """
+        granted = set(self.scope)
+        if f"*:{action}" in granted:
+            return True
+        for tag in tags:
+            if f"{tag}:{action}" in granted:
+                return True
+        return False
+
     @staticmethod
     def create_403(detail: str) -> HTTPException:
         return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)

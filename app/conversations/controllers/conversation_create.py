@@ -8,12 +8,20 @@ from app.conversations.models.conversation import (
 
 
 class ConversationCreateControl(BaseController):
+    """
+    Creating a conversation requires all included tags to be in the token scopes
+    """
     def __init__(self, claims: TokenClaims):
         super().__init__(claims)
 
     async def conversation_create(
         self, payload: ConversationCreate
     ) -> ConversationRead:
+
+        tags = [f"{tag.tag_key}:{tag.tag_value}" for tag in payload.tags]
+        if not self.can_create_with_tags(tags):
+            raise self.create_403("Not authorized to create a conversation with these tags")
+
         query = "INSERT INTO conversations (tenant_id, title, created_by) VALUES ($1, $2, $3) RETURNING *"
         row: dict = await self.db.insert(
             query,

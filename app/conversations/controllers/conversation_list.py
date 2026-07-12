@@ -10,9 +10,11 @@ class ConversationListControl(BaseController):
         super().__init__(claims)
 
     async def conversation_list(self, tags: list[str]) -> list[ConversationRead]:
-        for t in tags:
-            if t not in self.scope:
-                raise self.create_403(f"Scope does not permit tag '{t}'")
+        # single call — the OR-loop happens inside has_permission_any
+        allowed_tags = [t for t in tags if self.has_permission_any([t], "read")]
+
+        if not allowed_tags:
+            raise self.create_403("Not authorized to read any of the requested tags")
 
         query = """
         SELECT * FROM conversations c
