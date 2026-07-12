@@ -1,10 +1,17 @@
 from abc import ABC
 from datetime import datetime, timezone
+from enum import Enum
 
 from fastapi import HTTPException, status
 
 from app.authorization.claims import TokenClaims
 from app.db import Database, db
+
+
+class PermissionAction(str, Enum):
+    READ = "read"
+    WRITE = "write"
+    MANAGE_PARTICIPANTS = "manage_participants"
 
 
 class BaseController(ABC):
@@ -28,7 +35,7 @@ class BaseController(ABC):
                 return False
         return True
 
-    def has_permission_any(self, tags: list[str], action: str) -> bool:
+    def has_permission_any(self, tags: list[str], action: PermissionAction) -> bool:
         """
         ANY tag having the permission is enough. Used when checking access
         to something that already exists via one or more paths (tags).

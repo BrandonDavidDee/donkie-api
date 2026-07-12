@@ -1,7 +1,7 @@
 from asyncpg import Record
 
 from app.authorization.claims import TokenClaims
-from app.base_controller import BaseController
+from app.base_controller import BaseController, PermissionAction
 from app.conversations.models.conversation import ConversationRead
 
 
@@ -11,7 +11,9 @@ class ConversationListControl(BaseController):
 
     async def conversation_list(self, tags: list[str]) -> list[ConversationRead]:
         # single call — the OR-loop happens inside has_permission_any
-        allowed_tags = [t for t in tags if self.has_permission_any([t], "read")]
+        allowed_tags = [
+            t for t in tags if self.has_permission_any([t], PermissionAction.READ)
+        ]
 
         if not allowed_tags:
             raise self.create_403("Not authorized to read any of the requested tags")

@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from app.authorization.claims import TokenClaims
-from app.base_controller import BaseController
+from app.base_controller import BaseController, PermissionAction
 from app.conversations.models.message import (
     MessageCreate,
     MessageRead,
@@ -17,11 +17,13 @@ class MessageCreateControl(BaseController):
         self,
         payload: MessageCreate,
     ) -> MessageRead:
-        tags = await self._extract_tags()
+        tags: list[str] = await self._extract_tags()
+        allowed_tags = [
+            t for t in tags if self.has_permission_any([t], PermissionAction.WRITE)
+        ]
 
-        for t in tags:
-            if t not in self.scope:
-                raise self.create_403(f"Scope does not permit tag '{t}'")
+        if not allowed_tags:
+            raise self.create_403("Missing required scope for this conversation")
 
         query = (
             "INSERT INTO messages "

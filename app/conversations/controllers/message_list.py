@@ -3,7 +3,7 @@ from uuid import UUID
 from asyncpg import Record
 
 from app.authorization.claims import TokenClaims
-from app.base_controller import BaseController
+from app.base_controller import BaseController, PermissionAction
 from app.conversations.models.message import MessageRead
 
 
@@ -18,9 +18,12 @@ class MessageListControl(BaseController):
         # TODO: this can be condensed into one query, keep for now while testing
         tags = await self._extract_tags()
 
-        for t in tags:
-            if t not in self.scope:
-                raise self.create_403(f"Scope does not permit tag '{t}'")
+        allowed_tags = [
+            t for t in tags if self.has_permission_any([t], PermissionAction.READ)
+        ]
+
+        if not allowed_tags:
+            raise self.create_403("Not authorized to read any of the requested tags")
 
         query = "SELECT * FROM messages WHERE tenant_id = $1 AND conversation_id = $2"
 
