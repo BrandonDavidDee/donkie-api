@@ -7,6 +7,7 @@ from app.authorization.claims import TokenClaims, get_token_claims
 from .controllers.conversation_create import ConversationCreateControl
 from .controllers.conversation_list import ConversationListControl
 from .controllers.message_create import MessageCreateControl
+from .controllers.message_list import MessageListControl
 from .models.conversation import (
     ConversationCreate,
     ConversationRead,
@@ -40,3 +41,11 @@ async def message_create(
     claims: TokenClaims = Depends(get_token_claims),
 ) -> MessageRead:
     return await MessageCreateControl(claims, conversation_id).message_create(payload)
+
+
+@router.get("/{conversation_id}/messages")
+async def message_list(
+    conversation_id: UUID,
+    claims: TokenClaims = Depends(get_token_claims),
+) -> list[MessageRead]:
+    return await MessageListControl(claims, conversation_id).message_list()
