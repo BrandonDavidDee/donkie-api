@@ -1,6 +1,6 @@
 from app.authorization.claims import TokenClaims
 from app.base_controller import BaseController
-from app.conversations.models import (
+from app.conversations.models.conversation import (
     ConversationCreate,
     ConversationRead,
     ConversationTagRead,

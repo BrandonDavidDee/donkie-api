@@ -2,7 +2,7 @@ from asyncpg import Record
 
 from app.authorization.claims import TokenClaims
 from app.base_controller import BaseController
-from app.conversations.models import ConversationRead
+from app.conversations.models.conversation import ConversationRead
 
 
 class ConversationListControl(BaseController):

@@ -7,9 +7,11 @@ from app.authorization.claims import TokenClaims, get_token_claims
 from .controllers.conversation_create import ConversationCreateControl
 from .controllers.conversation_list import ConversationListControl
 from .controllers.message_create import MessageCreateControl
-from .models import (
+from .models.conversation import (
     ConversationCreate,
     ConversationRead,
+)
+from .models.message import (
     MessageCreate,
     MessageRead,
 )
