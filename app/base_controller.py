@@ -41,10 +41,10 @@ class BaseController(ABC):
         to something that already exists via one or more paths (tags).
         """
         granted = set(self.scope)
-        if f"*:{action}" in granted:
+        if f"*:{action.value}" in granted:
             return True
         for tag in tags:
-            if f"{tag}:{action}" in granted:
+            if f"{tag}:{action.value}" in granted:
                 return True
         return False
 
