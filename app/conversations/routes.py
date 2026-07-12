@@ -6,7 +6,14 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.authorization.claims import TokenClaims, get_token_claims
 from app.db import db
 
-from .models import ConversationCreate, ConversationRead, ConversationTagRead, MessageCreate, MessageRead
+from .controllers.conversation import ConversationDetail
+from .models import (
+    ConversationCreate,
+    ConversationRead,
+    ConversationTagRead,
+    MessageCreate,
+    MessageRead,
+)
 
 router = APIRouter()
 
@@ -57,39 +64,27 @@ async def conversation_create(
 async def get_conversations(
     tags: list[str] = Query(), claims: TokenClaims = Depends(get_token_claims)
 ):
-    for t in tags:
-        if t not in claims["scope"]:
-            raise HTTPException(403, f"Scope does not permit tag '{t}'")
-
-    query = """
-    SELECT * FROM conversations c
-    JOIN conversation_tags ct ON ct.conversation_id = c.id
-    WHERE ct.tenant_id = $1 AND (ct.tag_key || ':' || ct.tag_value) = ANY($2)  
-    """
-
-    tenant_id = claims["tenant_id"]
-    values = (tenant_id, tags)
-    result: list[Record] = await db.select_many(query, values)
-    output: list[UUID] = []
-    for row in result:
-        output.append(row["id"])
-    return {
-        "tags": tags,
-        "output": output,
-        "claims": claims,
-    }
+    return await ConversationDetail(claims).get_conversations(tags)
 
 
 @router.post("/{conversation_id}/messages")
 async def post_message(
-        conversation_id: UUID,
-        payload: MessageCreate,
-        claims: TokenClaims = Depends(get_token_claims)
+    conversation_id: UUID,
+    payload: MessageCreate,
+    claims: TokenClaims = Depends(get_token_claims),
 ) -> MessageRead:
-    tag_query = "SELECT * FROM conversation_tags WHERE tenant_id = $1 AND conversation_id = $2"
+    tag_query = (
+        "SELECT * FROM conversation_tags WHERE tenant_id = $1 AND conversation_id = $2"
+    )
     tenant_id = claims["tenant_id"]
     sender_id = claims["user_id"]
-    results = await db.select_many(tag_query, (tenant_id, conversation_id,))
+    results = await db.select_many(
+        tag_query,
+        (
+            tenant_id,
+            conversation_id,
+        ),
+    )
 
     if not results:
         raise HTTPException(404, "No Matching Conversation")
@@ -100,10 +95,12 @@ async def post_message(
             raise HTTPException(403, f"Scope does not permit tag '{t}'")
 
     # insert into messages logic here
-    query = ("INSERT INTO messages "
-             "(conversation_id, parent_message_id, tenant_id, sender_id, sender_display_name, body) "
-             "VALUES ($1, $2, $3, $4, $5, $6) "
-             "RETURNING *")
+    query = (
+        "INSERT INTO messages "
+        "(conversation_id, parent_message_id, tenant_id, sender_id, sender_display_name, body) "
+        "VALUES ($1, $2, $3, $4, $5, $6) "
+        "RETURNING *"
+    )
 
     values = (
         conversation_id,

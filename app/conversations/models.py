@@ -9,7 +9,6 @@ class MessageBase(BaseModel):
     body: str
 
 
-
 class MessageCreate(MessageBase):
     pass
 
