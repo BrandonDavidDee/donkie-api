@@ -4,6 +4,28 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
+class MessageBase(BaseModel):
+    sender_display_name: str
+    body: str
+
+
+
+class MessageCreate(MessageBase):
+    pass
+
+
+class MessageRead(MessageBase):
+    id: UUID
+    reply_count: int
+    created_at: datetime
+    edited_at: datetime | None
+    deleted_at: datetime | None
+
+
+class MessageUpdate(MessageBase):
+    reply_count: int
+
+
 class ConversationTagBase(BaseModel):
     tag_key: str
     tag_value: str

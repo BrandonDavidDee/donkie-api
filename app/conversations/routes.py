@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.authorization.claims import TokenClaims, get_token_claims
 from app.db import db
 
-from .models import ConversationCreate, ConversationRead, ConversationTagRead
+from .models import ConversationCreate, ConversationRead, ConversationTagRead, MessageCreate, MessageRead
 
 router = APIRouter()
 
@@ -66,6 +66,7 @@ async def get_conversations(
     JOIN conversation_tags ct ON ct.conversation_id = c.id
     WHERE ct.tenant_id = $1 AND (ct.tag_key || ':' || ct.tag_value) = ANY($2)  
     """
+
     tenant_id = claims["tenant_id"]
     values = (tenant_id, tags)
     result: list[Record] = await db.select_many(query, values)
@@ -77,3 +78,49 @@ async def get_conversations(
         "output": output,
         "claims": claims,
     }
+
+
+@router.post("/{conversation_id}/messages")
+async def post_message(
+        conversation_id: UUID,
+        payload: MessageCreate,
+        claims: TokenClaims = Depends(get_token_claims)
+) -> MessageRead:
+    tag_query = "SELECT * FROM conversation_tags WHERE tenant_id = $1 AND conversation_id = $2"
+    tenant_id = claims["tenant_id"]
+    sender_id = claims["user_id"]
+    results = await db.select_many(tag_query, (tenant_id, conversation_id,))
+
+    if not results:
+        raise HTTPException(404, "No Matching Conversation")
+
+    tags = [f"{row["tag_key"]}:{row["tag_value"]}" for row in results]
+    for t in tags:
+        if t not in claims["scope"]:
+            raise HTTPException(403, f"Scope does not permit tag '{t}'")
+
+    # insert into messages logic here
+    query = ("INSERT INTO messages "
+             "(conversation_id, parent_message_id, tenant_id, sender_id, sender_display_name, body) "
+             "VALUES ($1, $2, $3, $4, $5, $6) "
+             "RETURNING *")
+
+    values = (
+        conversation_id,
+        None,
+        tenant_id,
+        sender_id,
+        payload.sender_display_name,
+        payload.body,
+    )
+    row: Record = await db.insert(query, values)
+
+    return MessageRead(
+        id=row["id"],
+        sender_display_name=row["sender_display_name"],
+        body=row["body"],
+        reply_count=row["reply_count"],
+        created_at=row["created_at"],
+        edited_at=row["edited_at"],
+        deleted_at=row["deleted_at"],
+    )
