@@ -2,8 +2,16 @@ import jwt
 from fastapi import Depends, Header, HTTPException, status
 from jwt import PyJWTError
 from pydantic import ValidationError
+from typing_extensions import TypedDict
 
 from app.db import db
+
+
+class TokenClaims(TypedDict):
+    tenant_id: str
+    user_id: str
+    scope: list[str]
+    exp: int
 
 
 def create_401(detail: str) -> HTTPException:
@@ -18,7 +26,7 @@ def parse_auth_header(authorization: str = Header(None)) -> str | None:
     return token
 
 
-async def get_token_claims(token: str = Depends(parse_auth_header)) -> dict:
+async def get_token_claims(token: str = Depends(parse_auth_header)) -> TokenClaims:
     header = jwt.get_unverified_header(token)
     kid = header["kid"]
 
@@ -30,7 +38,7 @@ async def get_token_claims(token: str = Depends(parse_auth_header)) -> dict:
         raise HTTPException(401, "Unknown or revoked key")
 
     try:
-        claims: dict = jwt.decode(token, row["public_key"], algorithms=["ES256"])
+        claims: TokenClaims = jwt.decode(token, row["public_key"], algorithms=["ES256"])
 
         app_id = row["app_id"]
         if not claims["tenant_id"].startswith(f"{app_id}:"):

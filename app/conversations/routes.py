@@ -3,7 +3,7 @@ from uuid import UUID
 from asyncpg import Record
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.authorization.claims import get_token_claims
+from app.authorization.claims import TokenClaims, get_token_claims
 from app.db import db
 
 from .models import ConversationCreate, ConversationRead, ConversationTagRead
@@ -12,10 +12,12 @@ router = APIRouter()
 
 
 @router.post("")
-async def conversation_create(payload: ConversationCreate) -> ConversationRead:
+async def conversation_create(
+    payload: ConversationCreate, claims: TokenClaims = Depends(get_token_claims)
+) -> ConversationRead:
     query = "INSERT INTO conversations (tenant_id, title, created_by) VALUES ($1, $2, $3) RETURNING *"
-    tenant_id = "foo:bar"
-    created_by = "user:foo:1"
+    tenant_id = claims["tenant_id"]
+    created_by = claims["user_id"]
     row: Record = await db.insert(
         query,
         (
@@ -53,7 +55,7 @@ async def conversation_create(payload: ConversationCreate) -> ConversationRead:
 
 @router.get("")
 async def get_conversations(
-    tags: list[str] = Query(), claims=Depends(get_token_claims)
+    tags: list[str] = Query(), claims: TokenClaims = Depends(get_token_claims)
 ):
     for t in tags:
         if t not in claims["scope"]:
@@ -64,8 +66,7 @@ async def get_conversations(
     JOIN conversation_tags ct ON ct.conversation_id = c.id
     WHERE ct.tenant_id = $1 AND (ct.tag_key || ':' || ct.tag_value) = ANY($2)  
     """
-    tenant_id = "foo:bar"
-    # tag = "event:123"
+    tenant_id = claims["tenant_id"]
     values = (tenant_id, tags)
     result: list[Record] = await db.select_many(query, values)
     output: list[UUID] = []
