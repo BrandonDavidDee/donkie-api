@@ -9,9 +9,11 @@ from app.db import Database, db
 
 
 class PermissionAction(str, Enum):
+    CREATE = "create"
     READ = "read"
     WRITE = "write"
     MANAGE_PARTICIPANTS = "manage_participants"
+    TAG = "tag"
 
 
 class BaseController(ABC):
@@ -47,6 +49,16 @@ class BaseController(ABC):
             if f"{tag}:{action.value}" in granted:
                 return True
         return False
+
+    def can_add_tag(self, existing_convo_tags: list[str], new_tag: str):
+        """
+        for adding tags to existing conversation:
+        - The caller must already have write access to the conversation
+        - The caller must also have permission on the tag being added
+        """
+        return self.has_permission_any(
+            existing_convo_tags, PermissionAction.WRITE
+        ) and self.has_permission_any([new_tag], PermissionAction.TAG)
 
     @staticmethod
     def create_403(detail: str) -> HTTPException:

@@ -6,6 +6,7 @@ from app.authorization.claims import TokenClaims
 from app.base_controller import BaseController, PermissionAction
 from app.conversations.models.conversation import ConversationRead
 from app.conversations.models.message import MessageRead
+from app.conversations.models.tag import ConversationTagRead
 
 
 class ConversationDetailControl(BaseController):
@@ -22,7 +23,9 @@ class ConversationDetailControl(BaseController):
     ) -> ConversationRead:
         query = (
             "SELECT c.*, "
-            "ct.tag_key, ct.tag_value, "
+            "ct.tag_key, "
+            "ct.tag_value, "
+            "ct.created_at as tag_created_at, "
             "m.id as message_id, "
             "m.sender_id, "
             "m.sender_display_name, "
@@ -57,6 +60,7 @@ class ConversationDetailControl(BaseController):
             raise self.create_403("Missing required scope for this conversation")
 
         base_row: Record = results[0]
+        seen_tags: set[str] = set()
         seen_messages: set[UUID] = set()
 
         conversation = ConversationRead(
@@ -67,9 +71,22 @@ class ConversationDetailControl(BaseController):
             archived_at=base_row["archived_at"],
         )
         for row in results:
+            tag_id = f"{row["tag_key"]}:{row["tag_value"]}"
+            if tag_id is None or tag_id in seen_tags:
+                continue
+
+            tag = ConversationTagRead(
+                tag_key=row["tag_key"],
+                tag_value=row["tag_value"],
+                created_at=row["tag_created_at"],
+            )
+            seen_tags.add(tag_id)
+            conversation.tags.append(tag)
+
             message_id = row["message_id"]
             if message_id is None or message_id in seen_messages:
                 continue
+
             message = MessageRead(
                 id=message_id,
                 sender_display_name=row["sender_display_name"],
