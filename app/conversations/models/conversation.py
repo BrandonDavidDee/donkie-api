@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from .message import MessageRead
 from .tag import ConversationTagCreate, ConversationTagRead
 
 
@@ -20,6 +21,8 @@ class ConversationRead(ConversationBase):
     created_at: datetime
     archived_at: datetime | None
     tags: list[ConversationTagRead] = Field(default_factory=list)
+    messages: list[MessageRead] = Field(default_factory=list)
+    # participants: list[ParticipantRead] = Field(default_factory=list)
 
 
 class ConversationUpdate(ConversationBase):

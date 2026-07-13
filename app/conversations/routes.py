@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from app.authorization.claims import TokenClaims, get_token_claims
 
 from .controllers.conversation_create import ConversationCreateControl
+from .controllers.conversation_detail import ConversationDetailControl
 from .controllers.conversation_list import ConversationListControl
 from .controllers.message_create import MessageCreateControl
 from .controllers.message_list import MessageListControl
@@ -36,9 +37,13 @@ async def conversation_list(
 
 
 @router.get("/{conversation_id}")
-async def conversation_detail():
-    # TODO: Here, we grab the full conversation detail, participant list and first x amount of messages
-    pass
+async def conversation_detail(
+    conversation_id: UUID, claims: TokenClaims = Depends(get_token_claims)
+):
+    # TODO: add participant list and slice x amount of messages
+    return await ConversationDetailControl(
+        claims, conversation_id
+    ).conversation_detail()
 
 
 @router.post("/{conversation_id}/participants")
