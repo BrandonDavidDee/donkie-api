@@ -31,9 +31,9 @@ class BaseController(ABC):
         """
         granted = set(self.scope)
         for tag in tags:
-            if f"*:create" in granted:
+            if f"*:{PermissionAction.CREATE.value}" in granted:
                 continue
-            if f"{tag}:create" not in granted:
+            if f"{tag}:{PermissionAction.CREATE.value}" not in granted:
                 return False
         return True
 

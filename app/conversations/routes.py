@@ -46,9 +46,15 @@ async def conversation_detail(
     ).conversation_detail()
 
 
+@router.post("/{conversation_id}/tags")
+async def tag_create():
+    # TODO: build this out (for adding additional tags to an existing conversation)
+    pass
+
+
 @router.post("/{conversation_id}/participants")
 async def participant_create():
-    # TODO: build this out
+    # TODO: build this out (users will manually add additional participants)
     pass
 
 
@@ -66,6 +72,5 @@ async def message_list(
     conversation_id: UUID,
     claims: TokenClaims = Depends(get_token_claims),
 ) -> list[MessageRead]:
-    # TODO: This will eventually be used to grab the NEXT x amount of messages, appending
-    # to what is initially loaded in conversation detail
+    # TODO: This will eventually be used to grab the NEXT x amount of messages & push (client side)
     return await MessageListControl(claims, conversation_id).message_list()
