@@ -2,22 +2,22 @@
 
 ## Project snapshot
 - `app/main.py` is the actual FastAPI app entrypoint; the root `main.py` is only a "Hello from donkie-api!" stub.
-- `SCHEMA_NOTES.md` is the best source of product intent: a multi-tenant, API-first chat service with scoped JWT auth, no websockets, and no built-in user directory.
-- `README.md` is currently a placeholder, so prefer the code and schema notes over the README for implementation details.
+- `README.md` is the best source of product intent: a multi-tenant, API-first chat service with scoped JWT auth, no websockets, and no built-in user directory.
+- `README.md` is populated and should be treated as the design reference alongside the code.
 
 ## Architecture to keep in mind
-- The intended domain model is conversation-centric: `conversations`, `conversation_tags`, `participants`, `messages`, and `message_mentions` are the key concepts described in `SCHEMA_NOTES.md`.
+- The intended domain model is conversation-centric: `conversations`, `conversation_tags`, `participants`, `messages`, and `message_mentions` are the key concepts described in `README.md`.
 - Every persisted domain table is expected to carry `tenant_id` for isolation; tag lookup and message access are designed around tenant-scoped queries.
 - Auth is intentionally externalized: the host app mints JWTs with `scope` claims, and this service only verifies the token and compares requested tags/conversations against the scope.
 
 ## Current codebase shape
-- `app/schema.py` currently defines only `AuthUser` and still references missing models (`SourceBucket`, `SourceVimeo`); treat it as incomplete/legacy skeleton code.
-- `app/main.py` currently has only two toy routes (`/` and `/items/{item_id}`), so any real API work should happen by adding routers/modules rather than expanding these placeholder handlers.
+- `app/schema.py` defines the core SQLAlchemy models (`App`, `AppKey`, `Conversation`, `ConversationTag`, `Participant`, `Message`, `MessageMention`) and is the migration source of truth.
+- `app/main.py` wires lifespan DB pool startup/shutdown, CORS middleware, and routers from `app/root_route.py` and `app/conversations/routes.py`.
 - `app/__init__.py` is empty; there is no package-level wiring to preserve.
 
 ## Migrations and configuration
 - Alembic is configured for async PostgreSQL in `alembic/env.py` using `create_async_engine(..., poolclass=NullPool)`.
-- Database connection settings come from environment variables loaded via `.env`: `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `DATABASE_HOST`, and `DATABASE_NAME`.
+- Database connection settings come from environment variables loaded via `.env`: `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `DATABASE_HOST`, `DATABASE_PORT`, and `DATABASE_NAME`.
 - `alembic.ini` points at `alembic/` for revision scripts, and `schema.Base.metadata` is the migration target.
 
 ## Local workflows
@@ -32,7 +32,7 @@
 - Use composite keys and lookup indexes where the schema notes call for them, especially for tags and mentions.
 
 ## What to check before changing behavior
-- Read `SCHEMA_NOTES.md` first when adding API, auth, or data-model work; it is the design authority for the intended chat service.
-- Do not assume the current toy routes or `AuthUser` model represent the final architecture.
+- Read `README.md` first when adding API, auth, or data-model work; it is the design authority for the intended chat service.
+- Do not assume all conversation endpoints are complete yet; for example, `POST /conversations/{conversation_id}/participants` is still a TODO stub in `app/conversations/routes.py`.
 - Avoid hard-coding database URLs or tenant/user semantics; those are intentionally environment- and token-driven.
 
