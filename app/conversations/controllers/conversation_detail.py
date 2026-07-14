@@ -35,8 +35,8 @@ class ConversationDetailControl(BaseController):
             "m.deleted_at, "
             "m.reply_count "
             "FROM conversations c "
-            "JOIN conversation_tags ct ON ct.conversation_id = c.id "
-            "JOIN messages m ON m.conversation_id = c.id "
+            "LEFT JOIN conversation_tags ct ON ct.conversation_id = c.id "
+            "LEFT JOIN messages m ON m.conversation_id = c.id "
             "WHERE c.tenant_id = $1 AND c.id = $2"
         )
 
@@ -71,31 +71,30 @@ class ConversationDetailControl(BaseController):
             archived_at=base_row["archived_at"],
         )
         for row in results:
-            tag_id = f"{row["tag_key"]}:{row["tag_value"]}"
-            if tag_id is None or tag_id in seen_tags:
-                continue
+            # Process tags (independently of messages)
+            if row["tag_key"] is not None and row["tag_value"] is not None:
+                tag_id = f"{row["tag_key"]}:{row["tag_value"]}"
+                if tag_id not in seen_tags:
+                    tag = ConversationTagRead(
+                        tag_key=row["tag_key"],
+                        tag_value=row["tag_value"],
+                        created_at=row["tag_created_at"],
+                    )
+                    seen_tags.add(tag_id)
+                    conversation.tags.append(tag)
 
-            tag = ConversationTagRead(
-                tag_key=row["tag_key"],
-                tag_value=row["tag_value"],
-                created_at=row["tag_created_at"],
-            )
-            seen_tags.add(tag_id)
-            conversation.tags.append(tag)
-
+            # Process messages (independently of tags)
             message_id = row["message_id"]
-            if message_id is None or message_id in seen_messages:
-                continue
-
-            message = MessageRead(
-                id=message_id,
-                sender_display_name=row["sender_display_name"],
-                body=row["body"],
-                reply_count=row["reply_count"],
-                created_at=row["message_created_at"],
-                edited_at=row["edited_at"],
-                deleted_at=row["deleted_at"],
-            )
-            seen_messages.add(message_id)
-            conversation.messages.append(message)
+            if message_id is not None and message_id not in seen_messages:
+                message = MessageRead(
+                    id=message_id,
+                    sender_display_name=row["sender_display_name"],
+                    body=row["body"],
+                    reply_count=row["reply_count"],
+                    created_at=row["message_created_at"],
+                    edited_at=row["edited_at"],
+                    deleted_at=row["deleted_at"],
+                )
+                seen_messages.add(message_id)
+                conversation.messages.append(message)
         return conversation
