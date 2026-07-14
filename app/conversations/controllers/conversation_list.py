@@ -1,3 +1,4 @@
+from uuid import UUID
 from asyncpg import Record
 
 from app.authorization.claims import TokenClaims
@@ -27,15 +28,21 @@ class ConversationListControl(BaseController):
 
         result: list[Record] = await self.db.select_many(query, values)
         output: list[ConversationRead] = []
+        seen_conversations: set[UUID] = set()
 
         for row in result:
+            conversation_id = row["id"]
+            if conversation_id in seen_conversations:
+                continue
+
             conv = ConversationRead(
-                id=row["id"],
+                id=conversation_id,
                 title=row["title"],
                 created_by=row["created_by"],
                 created_at=row["created_at"],
                 archived_at=row["archived_at"],
             )
+            seen_conversations.add(conversation_id)
             output.append(conv)
 
         return output
