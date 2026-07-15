@@ -1,7 +1,13 @@
 from asyncpg import Record
+from pydantic import BaseModel
 
 from app.authorization.claims import TokenClaims
 from app.base_controller import BaseController
+
+
+class ConversationCountsPayload(BaseModel):
+    tags: list[str]
+    exclude: list[str] = []
 
 
 class ConversationCountsControl(BaseController):
@@ -9,7 +15,8 @@ class ConversationCountsControl(BaseController):
         super().__init__(claims)
 
     async def conversation_counts(
-        self, tags: list[str], exclude: list[str]
+        self,
+        payload: ConversationCountsPayload,
     ):
         query = """
         SELECT ct.tag_key || ':' || ct.tag_value AS tag, COUNT(DISTINCT c.id) AS count
@@ -29,9 +36,14 @@ class ConversationCountsControl(BaseController):
             query,
             (
                 self.tenant_id,
-                tags,
-                exclude,
+                payload.tags,
+                payload.exclude,
             ),
         )
+        output: dict[str, int] = {}
+        for row in results:
+            tag = row["tag"]
+            count = row["count"]
+            output[tag] = count
 
-
+        return output

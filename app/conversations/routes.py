@@ -4,6 +4,10 @@ from fastapi import APIRouter, Depends, Query
 
 from app.authorization.claims import TokenClaims, get_token_claims
 
+from .controllers.conversation_counts import (
+    ConversationCountsControl,
+    ConversationCountsPayload,
+)
 from .controllers.conversation_create import ConversationCreateControl
 from .controllers.conversation_detail import ConversationDetailControl
 from .controllers.conversation_list import ConversationListControl
@@ -32,9 +36,23 @@ async def conversation_create(
 
 @router.get("")
 async def conversation_list(
-    tags: list[str] = Query(), exclude: list[str] = Query([]), claims: TokenClaims = Depends(get_token_claims)
+    tags: list[str] = Query(),
+    exclude: list[str] = Query([]),
+    claims: TokenClaims = Depends(get_token_claims),
 ) -> list[ConversationRead]:
     return await ConversationListControl(claims).conversation_list(tags, exclude)
+
+
+@router.post("/counts")
+async def conversation_counts(
+    payload: ConversationCountsPayload, claims: TokenClaims = Depends(get_token_claims)
+):
+    return await ConversationCountsControl(claims).conversation_counts(payload)
+
+
+@router.post("/search")
+async def conversation_search():
+    pass
 
 
 @router.get("/{conversation_id}")
@@ -45,26 +63,6 @@ async def conversation_detail(
     return await ConversationDetailControl(
         claims, conversation_id
     ).conversation_detail()
-
-
-@router.post("/{conversation_id}/counts")
-async def get_counts():
-    """ setup as a POST endpoint because I anticipate a lot of tags """
-    example_output = {
-        "counts": {
-            "date:2026-01-01": 0,
-            "date:2026-01-02": 3,
-            "date:2026-01-12": 5,
-            "date:2026-01-31": 1,
-        }
-    }
-    return example_output
-
-
-@router.post("/{conversation_id}/search")
-async def conversation_search():
-    pass
-
 
 
 @router.post("/{conversation_id}/tags")

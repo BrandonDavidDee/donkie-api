@@ -1,4 +1,5 @@
 from uuid import UUID
+
 from asyncpg import Record
 
 from app.authorization.claims import TokenClaims
@@ -10,7 +11,9 @@ class ConversationListControl(BaseController):
     def __init__(self, claims: TokenClaims):
         super().__init__(claims)
 
-    async def conversation_list(self, tags: list[str], exclude: list[str]) -> list[ConversationRead]:
+    async def conversation_list(
+        self, tags: list[str], exclude: list[str]
+    ) -> list[ConversationRead]:
         # single call — the OR-loop happens inside has_permission_any
         allowed_tags = [
             t for t in tags if self.has_permission_any([t], PermissionAction.READ)
