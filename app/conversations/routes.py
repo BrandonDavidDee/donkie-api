@@ -11,6 +11,10 @@ from .controllers.conversation_counts import (
 from .controllers.conversation_create import ConversationCreateControl
 from .controllers.conversation_detail import ConversationDetailControl
 from .controllers.conversation_list import ConversationListControl
+from .controllers.conversation_search import (
+    ConversationSearchControl,
+    ConversationSearchPayload,
+)
 from .controllers.message_create import MessageCreateControl
 from .controllers.message_list import MessageListControl
 from .models.conversation import (
@@ -51,8 +55,12 @@ async def conversation_counts(
 
 
 @router.post("/search")
-async def conversation_search():
-    pass
+async def conversation_search(
+    payload: ConversationSearchPayload,
+    offset: int = 0,
+    claims: TokenClaims = Depends(get_token_claims),
+):
+    return await ConversationSearchControl(claims).conversation_search(payload, offset)
 
 
 @router.get("/{conversation_id}")
