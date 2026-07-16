@@ -9,7 +9,7 @@ from app.conversations.models.message import (
 
 
 class MessageCreateControl(BaseController):
-    def __init__(self, claims: TokenClaims, conversation_id: UUID):
+    def __init__(self, claims: TokenClaims, conversation_id: UUID) -> None:
         super().__init__(claims)
         self.conversation_id = conversation_id
 

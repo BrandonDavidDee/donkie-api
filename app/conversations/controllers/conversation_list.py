@@ -13,7 +13,7 @@ from app.conversations.models.tag import ConversationTagRead
 
 
 class ConversationListControl(BaseController):
-    def __init__(self, claims: TokenClaims):
+    def __init__(self, claims: TokenClaims) -> None:
         super().__init__(claims)
 
     async def conversation_list(

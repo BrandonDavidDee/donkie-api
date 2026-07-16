@@ -16,7 +16,7 @@ class ConversationSearchPayload(BaseModel):
 
 
 class ConversationSearchControl(BaseController):
-    def __init__(self, claims: TokenClaims):
+    def __init__(self, claims: TokenClaims) -> None:
         super().__init__(claims)
 
     @staticmethod

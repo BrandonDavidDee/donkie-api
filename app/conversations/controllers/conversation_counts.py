@@ -11,7 +11,7 @@ class ConversationCountsPayload(BaseModel):
 
 
 class ConversationCountsControl(BaseController):
-    def __init__(self, claims: TokenClaims):
+    def __init__(self, claims: TokenClaims) -> None:
         super().__init__(claims)
 
     async def conversation_counts(

@@ -12,7 +12,7 @@ class ConversationCreateControl(BaseController):
     Creating a conversation requires all included tags to be in the token scopes
     """
 
-    def __init__(self, claims: TokenClaims):
+    def __init__(self, claims: TokenClaims) -> None:
         super().__init__(claims)
 
     async def conversation_create(

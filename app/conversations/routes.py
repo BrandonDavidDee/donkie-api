@@ -19,6 +19,7 @@ from .controllers.message_create import MessageCreateControl
 from .controllers.message_list import MessageListControl
 from .controllers.message_pagination import MessageSortOrder
 from .controllers.participant_create import ParticipantCreateControl
+from .controllers.tag_create import TagCreateControl
 from .models.conversation import (
     ConversationCreate,
     ConversationDetailRead,
@@ -31,6 +32,7 @@ from .models.message import (
     MessageRead,
 )
 from .models.participant import ParticipantCreate, ParticipantRead
+from .models.tag import ConversationTagCreate, ConversationTagRead
 
 router = APIRouter()
 
@@ -60,7 +62,7 @@ async def conversation_list(
 @router.post("/counts")
 async def conversation_counts(
     payload: ConversationCountsPayload, claims: TokenClaims = Depends(get_token_claims)
-):
+) -> dict[str, int]:
     return await ConversationCountsControl(claims).conversation_counts(payload)
 
 
@@ -69,7 +71,7 @@ async def conversation_search(
     payload: ConversationSearchPayload,
     offset: int = 0,
     claims: TokenClaims = Depends(get_token_claims),
-):
+) -> list[ConversationRead]:
     return await ConversationSearchControl(claims).conversation_search(payload, offset)
 
 
@@ -92,9 +94,12 @@ async def conversation_detail(
 
 
 @router.post("/{conversation_id}/tags")
-async def tag_create(conversation_id: UUID):
-    # TODO: build this out (for adding additional tags to an existing conversation)
-    pass
+async def tag_create(
+    conversation_id: UUID,
+    payload: ConversationTagCreate,
+    claims: TokenClaims = Depends(get_token_claims),
+) -> ConversationTagRead:
+    return await TagCreateControl(claims, conversation_id).tag_create(payload)
 
 
 @router.post("/{conversation_id}/participants")
