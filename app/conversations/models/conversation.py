@@ -4,8 +4,8 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from .message import MessageListPaginated, MessageRead
-from .tag import ConversationTagCreate, ConversationTagRead
 from .participant import ParticipantRead
+from .tag import ConversationTagCreate, ConversationTagRead
 
 
 class ConversationBase(BaseModel):

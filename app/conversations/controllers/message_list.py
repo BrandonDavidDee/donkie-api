@@ -45,9 +45,7 @@ class MessageListControl(BaseController, MessagePaginationMixin):
             cursor_created_at, cursor_message_id = self.decode_message_cursor(
                 cursor, order
             )
-            query += (
-                f" AND (created_at, id) {self.message_cursor_operator(order)} (${len(values) + 1}, ${len(values) + 2})"
-            )
+            query += f" AND (created_at, id) {self.message_cursor_operator(order)} (${len(values) + 1}, ${len(values) + 2})"
             values.extend([cursor_created_at, cursor_message_id])
 
         query += (

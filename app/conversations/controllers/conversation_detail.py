@@ -48,7 +48,9 @@ class ConversationDetailControl(BaseController, MessagePaginationMixin):
             "WHERE tenant_id = $1 AND conversation_id = $2 "
             "ORDER BY created_at ASC, tag_key ASC, tag_value ASC"
         )
-        tag_rows = await self.db.select_many(tags_query, (self.tenant_id, self.conversation_id))
+        tag_rows = await self.db.select_many(
+            tags_query, (self.tenant_id, self.conversation_id)
+        )
 
         tags: list[str] = await self._extract_tags(tag_rows)
         allowed_tags = [
@@ -78,14 +80,10 @@ class ConversationDetailControl(BaseController, MessagePaginationMixin):
             cursor_created_at, cursor_message_id = self.decode_message_cursor(
                 cursor, order
             )
-            message_query += (
-                f" AND (created_at, id) {self.message_cursor_operator(order)} (${len(message_values) + 1}, ${len(message_values) + 2})"
-            )
+            message_query += f" AND (created_at, id) {self.message_cursor_operator(order)} (${len(message_values) + 1}, ${len(message_values) + 2})"
             message_values.extend([cursor_created_at, cursor_message_id])
 
-        message_query += (
-            f" ORDER BY {self.message_order_clause(order)} LIMIT ${len(message_values) + 1}"
-        )
+        message_query += f" ORDER BY {self.message_order_clause(order)} LIMIT ${len(message_values) + 1}"
         message_values.append(limit + 1)
         message_rows = await self.db.select_many(message_query, tuple(message_values))
 

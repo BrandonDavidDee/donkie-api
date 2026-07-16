@@ -45,11 +45,15 @@ async def conversation_create(
 async def conversation_list(
     tags: list[str] = Query(),
     exclude: list[str] = Query([]),
-    cursor: str | None = Query(None, description="Cursor for pagination (ISO 8601 timestamp)"),
+    cursor: str | None = Query(
+        None, description="Cursor for pagination (ISO 8601 timestamp)"
+    ),
     limit: int = Query(50, ge=1, le=100, description="Number of results per page"),
     claims: TokenClaims = Depends(get_token_claims),
 ) -> ConversationListPaginated:
-    return await ConversationListControl(claims).conversation_list(tags, exclude, cursor, limit)
+    return await ConversationListControl(claims).conversation_list(
+        tags, exclude, cursor, limit
+    )
 
 
 @router.post("/counts")
@@ -76,13 +80,14 @@ async def conversation_detail(
     ),
     limit: int = Query(50, ge=1, le=100, description="Number of messages to include"),
     order: MessageSortOrder = Query(
-        "asc", description="Message sort order: asc for oldest-first, desc for newest-first"
+        "asc",
+        description="Message sort order: asc for oldest-first, desc for newest-first",
     ),
     claims: TokenClaims = Depends(get_token_claims),
 ) -> ConversationDetailRead:
-    return await ConversationDetailControl(
-        claims, conversation_id
-    ).conversation_detail(cursor, limit, order)
+    return await ConversationDetailControl(claims, conversation_id).conversation_detail(
+        cursor, limit, order
+    )
 
 
 @router.post("/{conversation_id}/tags")
@@ -114,7 +119,8 @@ async def message_list(
     ),
     limit: int = Query(50, ge=1, le=100, description="Number of messages per page"),
     order: MessageSortOrder = Query(
-        "asc", description="Message sort order: asc for oldest-first, desc for newest-first"
+        "asc",
+        description="Message sort order: asc for oldest-first, desc for newest-first",
     ),
     claims: TokenClaims = Depends(get_token_claims),
 ) -> MessageListPaginated:

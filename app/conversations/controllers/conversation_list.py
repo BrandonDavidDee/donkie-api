@@ -1,11 +1,14 @@
-from uuid import UUID
 from datetime import datetime
+from uuid import UUID
 
 from asyncpg import Record
 
 from app.authorization.claims import TokenClaims
 from app.base_controller import BaseController, PermissionAction
-from app.conversations.models.conversation import ConversationRead, ConversationListPaginated
+from app.conversations.models.conversation import (
+    ConversationListPaginated,
+    ConversationRead,
+)
 from app.conversations.models.tag import ConversationTagRead
 
 

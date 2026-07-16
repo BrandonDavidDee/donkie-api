@@ -9,7 +9,6 @@ from fastapi import HTTPException, status
 
 from app.conversations.models.message import MessageListPaginated, MessageRead
 
-
 MessageSortOrder = Literal["asc", "desc"]
 
 
@@ -84,4 +83,3 @@ class MessagePaginationMixin:
             next_cursor=next_cursor,
             has_more=has_more,
         )
-
