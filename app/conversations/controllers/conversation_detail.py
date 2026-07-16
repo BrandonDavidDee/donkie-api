@@ -71,7 +71,7 @@ class ConversationDetailControl(BaseController, MessagePaginationMixin):
         )
 
         message_query = (
-            "SELECT id, sender_display_name, body, reply_count, created_at, edited_at, deleted_at "
+            "SELECT id, sender_display_name, sender_id, body, reply_count, created_at, edited_at, deleted_at "
             "FROM messages "
             "WHERE tenant_id = $1 AND conversation_id = $2"
         )

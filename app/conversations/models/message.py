@@ -15,6 +15,7 @@ class MessageCreate(MessageBase):
 class MessageRead(MessageBase):
     id: UUID
     sender_display_name: str
+    sender_id: str
     reply_count: int
     created_at: datetime
     edited_at: datetime | None

@@ -62,6 +62,7 @@ class MessagePaginationMixin:
                 MessageRead(
                     id=row["id"],
                     sender_display_name=row["sender_display_name"],
+                    sender_id=row["sender_id"],
                     body=row["body"],
                     reply_count=row["reply_count"],
                     created_at=row["created_at"],
