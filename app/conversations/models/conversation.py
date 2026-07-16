@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from .message import MessageRead
 from .tag import ConversationTagCreate, ConversationTagRead
+from .participant import ParticipantRead
 
 
 class ConversationBase(BaseModel):
@@ -22,7 +23,7 @@ class ConversationRead(ConversationBase):
     archived_at: datetime | None
     tags: list[ConversationTagRead] = Field(default_factory=list)
     messages: list[MessageRead] = Field(default_factory=list)
-    # participants: list[ParticipantRead] = Field(default_factory=list)
+    participants: list[ParticipantRead] = Field(default_factory=list)
 
 
 class ConversationListPaginated(BaseModel):

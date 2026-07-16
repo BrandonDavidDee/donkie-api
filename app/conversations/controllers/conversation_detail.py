@@ -6,7 +6,9 @@ from app.authorization.claims import TokenClaims
 from app.base_controller import BaseController, PermissionAction
 from app.conversations.models.conversation import ConversationRead
 from app.conversations.models.message import MessageRead
+
 from app.conversations.models.tag import ConversationTagRead
+from app.conversations.models.participant import ParticipantRead
 
 
 class ConversationDetailControl(BaseController):
@@ -21,6 +23,7 @@ class ConversationDetailControl(BaseController):
     async def conversation_detail(
         self,
     ) -> ConversationRead:
+        # TODO: join participants in this query
         query = (
             "SELECT c.*, "
             "ct.tag_key, "

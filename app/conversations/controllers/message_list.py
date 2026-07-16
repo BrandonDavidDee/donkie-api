@@ -15,7 +15,8 @@ class MessageListControl(BaseController):
     async def message_list(
         self,
     ) -> list[MessageRead]:
-        # TODO: this can be condensed into one query, keep for now while testing
+        # TODO: Should this be be condensed into one query? If we add pagination, maybe it's cleaner to keep it separate?
+        # if it stays separate the message list query can stay simple and straightforward.
         tags = await self._extract_tags()
 
         allowed_tags = [

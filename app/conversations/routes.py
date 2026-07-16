@@ -69,7 +69,6 @@ async def conversation_search(
 async def conversation_detail(
     conversation_id: UUID, claims: TokenClaims = Depends(get_token_claims)
 ):
-    # TODO: add participant list and slice x amount of messages
     return await ConversationDetailControl(
         claims, conversation_id
     ).conversation_detail()
