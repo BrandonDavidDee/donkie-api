@@ -8,7 +8,7 @@ class ParticipantBase(BaseModel):
 
 
 class ParticipantCreate(ParticipantBase):
-    joined_at: datetime
+    pass
 
 
 class ParticipantRead(ParticipantBase):

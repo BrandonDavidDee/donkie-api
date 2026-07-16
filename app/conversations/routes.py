@@ -18,6 +18,7 @@ from .controllers.conversation_search import (
 from .controllers.message_create import MessageCreateControl
 from .controllers.message_list import MessageListControl
 from .controllers.message_pagination import MessageSortOrder
+from .controllers.participant_create import ParticipantCreateControl
 from .models.conversation import (
     ConversationCreate,
     ConversationDetailRead,
@@ -29,6 +30,7 @@ from .models.message import (
     MessageListPaginated,
     MessageRead,
 )
+from .models.participant import ParticipantCreate, ParticipantRead
 
 router = APIRouter()
 
@@ -91,15 +93,20 @@ async def conversation_detail(
 
 
 @router.post("/{conversation_id}/tags")
-async def tag_create():
+async def tag_create(conversation_id: UUID):
     # TODO: build this out (for adding additional tags to an existing conversation)
     pass
 
 
 @router.post("/{conversation_id}/participants")
-async def participant_create():
-    # TODO: build this out (users will manually add additional participants)
-    pass
+async def participant_create(
+    conversation_id: UUID,
+    payload: ParticipantCreate,
+    claims: TokenClaims = Depends(get_token_claims),
+) -> ParticipantRead:
+    return await ParticipantCreateControl(claims, conversation_id).participant_create(
+        payload
+    )
 
 
 @router.post("/{conversation_id}/messages")
