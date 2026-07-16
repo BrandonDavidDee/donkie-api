@@ -1,11 +1,11 @@
 from app.authorization.claims import TokenClaims
 from app.base_controller import BaseController
-from app.conversations.models.message import MessageListPaginated
 from app.conversations.models.conversation import (
     ConversationCreate,
     ConversationRead,
     ConversationTagRead,
 )
+from app.conversations.models.message import MessageListPaginated
 
 
 class ConversationCreateControl(BaseController):

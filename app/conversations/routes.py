@@ -18,6 +18,7 @@ from .controllers.conversation_search import (
 from .controllers.message_create import MessageCreateControl
 from .controllers.message_list import MessageListControl
 from .controllers.message_pagination import MessageSortOrder
+from .controllers.message_update import MessageUpdateControl
 from .controllers.participant_create import ParticipantCreateControl
 from .controllers.tag_create import TagCreateControl
 from .models.conversation import (
@@ -29,6 +30,7 @@ from .models.message import (
     MessageCreate,
     MessageListPaginated,
     MessageRead,
+    MessageUpdate,
 )
 from .models.participant import ParticipantCreate, ParticipantRead
 from .models.tag import ConversationTagCreate, ConversationTagRead
@@ -137,3 +139,16 @@ async def message_list(
     return await MessageListControl(claims, conversation_id).message_list(
         cursor, limit, order
     )
+
+
+@router.put("/{conversation_id}/messages/{message_id}")
+async def message_update(
+    conversation_id: UUID,
+    message_id: UUID,
+    payload: MessageUpdate,
+    claims: TokenClaims = Depends(get_token_claims),
+) -> MessageRead:
+    controller = MessageUpdateControl(
+        claims, conversation_id=conversation_id, message_id=message_id
+    )
+    return await controller.message_update(payload)

@@ -29,4 +29,4 @@ class MessageListPaginated(BaseModel):
 
 
 class MessageUpdate(MessageBase):
-    reply_count: int
+    sender_id: str
