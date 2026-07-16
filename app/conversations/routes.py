@@ -17,13 +17,16 @@ from .controllers.conversation_search import (
 )
 from .controllers.message_create import MessageCreateControl
 from .controllers.message_list import MessageListControl
+from .controllers.message_pagination import MessageSortOrder
 from .models.conversation import (
     ConversationCreate,
-    ConversationRead,
+    ConversationDetailRead,
     ConversationListPaginated,
+    ConversationRead,
 )
 from .models.message import (
     MessageCreate,
+    MessageListPaginated,
     MessageRead,
 )
 
@@ -67,11 +70,19 @@ async def conversation_search(
 
 @router.get("/{conversation_id}")
 async def conversation_detail(
-    conversation_id: UUID, claims: TokenClaims = Depends(get_token_claims)
-):
+    conversation_id: UUID,
+    cursor: str | None = Query(
+        None, description="Opaque cursor for the next page of messages"
+    ),
+    limit: int = Query(50, ge=1, le=100, description="Number of messages to include"),
+    order: MessageSortOrder = Query(
+        "asc", description="Message sort order: asc for oldest-first, desc for newest-first"
+    ),
+    claims: TokenClaims = Depends(get_token_claims),
+) -> ConversationDetailRead:
     return await ConversationDetailControl(
         claims, conversation_id
-    ).conversation_detail()
+    ).conversation_detail(cursor, limit, order)
 
 
 @router.post("/{conversation_id}/tags")
@@ -98,7 +109,15 @@ async def message_create(
 @router.get("/{conversation_id}/messages")
 async def message_list(
     conversation_id: UUID,
+    cursor: str | None = Query(
+        None, description="Opaque cursor for the next page of messages"
+    ),
+    limit: int = Query(50, ge=1, le=100, description="Number of messages per page"),
+    order: MessageSortOrder = Query(
+        "asc", description="Message sort order: asc for oldest-first, desc for newest-first"
+    ),
     claims: TokenClaims = Depends(get_token_claims),
-) -> list[MessageRead]:
-    # TODO: This will eventually be used to grab the NEXT x amount of messages & push (client side)
-    return await MessageListControl(claims, conversation_id).message_list()
+) -> MessageListPaginated:
+    return await MessageListControl(claims, conversation_id).message_list(
+        cursor, limit, order
+    )
