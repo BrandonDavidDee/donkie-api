@@ -8,7 +8,7 @@
 ## Architecture to keep in mind
 - The intended domain model is conversation-centric: `conversations`, `conversation_tags`, `participants`, `messages`, and `message_mentions` are the key concepts described in `README.md`.
 - Every persisted domain table is expected to carry `tenant_id` for isolation; tag lookup and message access are designed around tenant-scoped queries.
-- Auth is intentionally externalized: the host app mints JWTs with `scope` claims, and this service only verifies the token and compares requested tags/conversations against the scope.
+- Auth is intentionally externalized: the host app mints JWTs with permissioned `scope` values (for example `assignment:882:read`, `assignment:882:write`, `assignment:882:tag`, `*:create`), and this service verifies the token against `app_keys`, enforces app/tenant prefix matching, then checks action-specific scope in controllers.
 
 ## Current codebase shape
 - `app/schema.py` defines the core SQLAlchemy models (`App`, `AppKey`, `Conversation`, `ConversationTag`, `Participant`, `Message`, `MessageMention`) and is the migration source of truth.
@@ -33,6 +33,5 @@
 
 ## What to check before changing behavior
 - Read `README.md` first when adding API, auth, or data-model work; it is the design authority for the intended chat service.
-- Do not assume all conversation endpoints are complete yet; for example, `POST /conversations/{conversation_id}/participants` is still a TODO stub in `app/conversations/routes.py`.
+- Conversation endpoints in `app/conversations/routes.py` are implemented across list/detail/search/counts, tag/participant writes, and message create/list/update; follow the existing one-controller-per-endpoint pattern in `app/conversations/controllers/`.
 - Avoid hard-coding database URLs or tenant/user semantics; those are intentionally environment- and token-driven.
-
