@@ -39,7 +39,6 @@ router = APIRouter()
 async def conversation_create(
     payload: ConversationCreate, claims: TokenClaims = Depends(get_token_claims)
 ) -> ConversationRead:
-    # TODO: automatically add creator as participant
     return await ConversationCreateControl(claims).conversation_create(payload)
 
 

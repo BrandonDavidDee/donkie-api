@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 
 
 class MessageBase(BaseModel):
-    sender_display_name: str
     body: str
 
 
@@ -15,6 +14,7 @@ class MessageCreate(MessageBase):
 
 class MessageRead(MessageBase):
     id: UUID
+    sender_display_name: str
     reply_count: int
     created_at: datetime
     edited_at: datetime | None
