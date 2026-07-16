@@ -1,4 +1,5 @@
 from uuid import UUID
+from datetime import datetime, timezone
 
 from asyncpg import Record
 
@@ -105,13 +106,33 @@ class ConversationDetailControl(BaseController, MessagePaginationMixin):
             )
 
         for row in participant_rows:
-            conversation.participants.append(
-                ParticipantRead(
-                    user_id=row["user_id"],
-                    last_read_at=row["last_read_at"],
-                    joined_at=row["joined_at"],
-                )
+            participant = ParticipantRead(
+                user_id=row["user_id"],
+                last_read_at=row["last_read_at"],
+                joined_at=row["joined_at"],
             )
+
+            if participant.user_id == self.user_id:
+                participant.last_read_at = await self._update_participant()
+
+            conversation.participants.append(participant)
 
         conversation.messages = self.build_message_page(message_rows, limit, order)
         return conversation
+
+    async def _update_participant(self) -> datetime:
+        query = (
+            "UPDATE participants "
+            "SET last_read_at = $1 "
+            "WHERE tenant_id = $2 AND conversation_id = $3 AND user_id = $4 "
+            "RETURNING last_read_at"
+        )
+        now = datetime.now(tz=timezone.utc)
+        values = (
+            now,
+            self.tenant_id,
+            self.conversation_id,
+            self.user_id,
+        )
+        row: dict = await self.db.insert(query, values)
+        return row["last_read_at"]
