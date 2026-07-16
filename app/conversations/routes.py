@@ -22,7 +22,6 @@ from .controllers.participant_create import ParticipantCreateControl
 from .controllers.tag_create import TagCreateControl
 from .models.conversation import (
     ConversationCreate,
-    ConversationDetailRead,
     ConversationListPaginated,
     ConversationRead,
 )
@@ -87,7 +86,7 @@ async def conversation_detail(
         description="Message sort order: asc for oldest-first, desc for newest-first",
     ),
     claims: TokenClaims = Depends(get_token_claims),
-) -> ConversationDetailRead:
+) -> ConversationRead:
     return await ConversationDetailControl(claims, conversation_id).conversation_detail(
         cursor, limit, order
     )

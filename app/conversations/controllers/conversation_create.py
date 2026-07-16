@@ -1,5 +1,6 @@
 from app.authorization.claims import TokenClaims
 from app.base_controller import BaseController
+from app.conversations.models.message import MessageListPaginated
 from app.conversations.models.conversation import (
     ConversationCreate,
     ConversationRead,
@@ -50,6 +51,12 @@ class ConversationCreateControl(BaseController):
             )
             new_tags.append(new_tag)
 
+        messages = MessageListPaginated(
+            items=[],
+            next_cursor=None,
+            has_more=False,
+        )
+
         return ConversationRead(
             id=conversation_id,
             title=row["title"],
@@ -57,4 +64,5 @@ class ConversationCreateControl(BaseController):
             created_at=row["created_at"],
             archived_at=row["archived_at"],
             tags=new_tags,
+            messages=messages,
         )

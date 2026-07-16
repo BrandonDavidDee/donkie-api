@@ -8,7 +8,7 @@ from app.conversations.controllers.message_pagination import (
     MessagePaginationMixin,
     MessageSortOrder,
 )
-from app.conversations.models.conversation import ConversationDetailRead
+from app.conversations.models.conversation import ConversationRead
 from app.conversations.models.participant import ParticipantRead
 from app.conversations.models.tag import ConversationTagRead
 
@@ -27,7 +27,7 @@ class ConversationDetailControl(BaseController, MessagePaginationMixin):
         cursor: str | None = None,
         limit: int = 50,
         order: MessageSortOrder = "asc",
-    ) -> ConversationDetailRead:
+    ) -> ConversationRead:
         limit = max(1, min(limit, 100))
 
         conversation_query = (
@@ -87,7 +87,7 @@ class ConversationDetailControl(BaseController, MessagePaginationMixin):
         message_values.append(limit + 1)
         message_rows = await self.db.select_many(message_query, tuple(message_values))
 
-        conversation = ConversationDetailRead(
+        conversation = ConversationRead(
             id=base_row["id"],
             title=base_row["title"],
             created_by=base_row["created_by"],

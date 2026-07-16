@@ -22,16 +22,6 @@ class ConversationRead(ConversationBase):
     created_at: datetime
     archived_at: datetime | None
     tags: list[ConversationTagRead] = Field(default_factory=list)
-    messages: list[MessageRead] = Field(default_factory=list)
-    participants: list[ParticipantRead] = Field(default_factory=list)
-
-
-class ConversationDetailRead(ConversationBase):
-    id: UUID
-    created_by: str
-    created_at: datetime
-    archived_at: datetime | None
-    tags: list[ConversationTagRead] = Field(default_factory=list)
     participants: list[ParticipantRead] = Field(default_factory=list)
     messages: MessageListPaginated = Field(default_factory=MessageListPaginated)
 
