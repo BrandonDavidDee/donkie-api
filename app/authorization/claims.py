@@ -10,6 +10,7 @@ from app.db import db
 class TokenClaims(TypedDict):
     tenant_id: str
     user_id: str
+    display_name: str
     scope: list[str]
     exp: int
 

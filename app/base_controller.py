@@ -1,5 +1,4 @@
 from abc import ABC
-from datetime import datetime, timezone
 from enum import Enum
 
 from fastapi import HTTPException, status
@@ -20,9 +19,9 @@ class BaseController(ABC):
     def __init__(self, claims: TokenClaims) -> None:
         self.tenant_id = claims["tenant_id"]
         self.user_id = claims["user_id"]
+        self.display_name = claims["display_name"]
         self.scope = claims["scope"]
         self.db: Database = db
-        self.now = datetime.now(tz=timezone.utc)
 
     def can_create_with_tags(self, tags: list[str]) -> bool:
         """

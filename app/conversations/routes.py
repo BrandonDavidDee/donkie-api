@@ -20,6 +20,7 @@ from .controllers.message_list import MessageListControl
 from .models.conversation import (
     ConversationCreate,
     ConversationRead,
+    ConversationListPaginated,
 )
 from .models.message import (
     MessageCreate,
@@ -34,7 +35,6 @@ async def conversation_create(
     payload: ConversationCreate, claims: TokenClaims = Depends(get_token_claims)
 ) -> ConversationRead:
     # TODO: automatically add creator as participant
-    # TODO: this view should paginate
     return await ConversationCreateControl(claims).conversation_create(payload)
 
 
@@ -42,9 +42,11 @@ async def conversation_create(
 async def conversation_list(
     tags: list[str] = Query(),
     exclude: list[str] = Query([]),
+    cursor: str | None = Query(None, description="Cursor for pagination (ISO 8601 timestamp)"),
+    limit: int = Query(50, ge=1, le=100, description="Number of results per page"),
     claims: TokenClaims = Depends(get_token_claims),
-) -> list[ConversationRead]:
-    return await ConversationListControl(claims).conversation_list(tags, exclude)
+) -> ConversationListPaginated:
+    return await ConversationListControl(claims).conversation_list(tags, exclude, cursor, limit)
 
 
 @router.post("/counts")

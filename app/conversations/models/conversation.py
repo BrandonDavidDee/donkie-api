@@ -25,5 +25,19 @@ class ConversationRead(ConversationBase):
     # participants: list[ParticipantRead] = Field(default_factory=list)
 
 
+class ConversationListPaginated(BaseModel):
+    """Paginated response for conversation list."""
+
+    items: list[ConversationRead] = Field(
+        default_factory=list, description="List of conversations"
+    )
+    next_cursor: str | None = Field(
+        None, description="Cursor for fetching next page; null if no more results"
+    )
+    has_more: bool = Field(
+        False, description="Whether there are more results available"
+    )
+
+
 class ConversationUpdate(ConversationBase):
     pass
