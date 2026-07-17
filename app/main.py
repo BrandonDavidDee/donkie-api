@@ -34,7 +34,7 @@ def configure_middleware(event_run_api: FastAPI) -> None:
 
 def register_routers(event_run_api: FastAPI) -> None:
     event_run_api.include_router(root_router, prefix="")
-    event_run_api.include_router(conversations, prefix="/conversations")
+    event_run_api.include_router(conversations, prefix="/v1/conversations")
 
 
 def create_app() -> FastAPI:

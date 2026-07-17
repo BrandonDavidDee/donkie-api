@@ -16,6 +16,15 @@ class ConversationSearchPayload(BaseModel):
 
 
 class ConversationSearchControl(BaseController):
+    """
+    Not sure if I'll need this anymore, keeping until I determine.
+
+    This allows finding conversations by supplying known tags, with a wildcard tqg value,
+    in the form of tag key and search value pairs.
+
+    The query also confirms that the user's scope includes the conversation tags
+    """
+
     def __init__(self, claims: TokenClaims) -> None:
         super().__init__(claims)
 

@@ -53,10 +53,11 @@ async def conversation_list(
         None, description="Cursor for pagination (ISO 8601 timestamp)"
     ),
     limit: int = Query(50, ge=1, le=100, description="Number of results per page"),
+    search: str | None = None,
     claims: TokenClaims = Depends(get_token_claims),
 ) -> ConversationListPaginated:
     return await ConversationListControl(claims).conversation_list(
-        tags, exclude, cursor, limit
+        tags, exclude, cursor, limit, search
     )
 
 

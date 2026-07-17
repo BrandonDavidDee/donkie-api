@@ -1,4 +1,3 @@
-from datetime import datetime
 from uuid import UUID
 
 from asyncpg import Record
@@ -22,6 +21,7 @@ class ConversationListControl(BaseController):
         exclude: list[str],
         cursor: str | None = None,
         limit: int = 50,
+        search: str | None = None,
     ) -> ConversationListPaginated:
         # single call — the OR-loop happens inside has_permission_any
         allowed_tags = [
@@ -34,8 +34,6 @@ class ConversationListControl(BaseController):
         # Give em the clamps!
         limit = max(1, min(limit, 100))
 
-        # Build query with cursor-based pagination
-        # Query for limit+1 to determine if there are more results
         query = """
         SELECT c.*,
                ct.tag_key,
@@ -50,12 +48,20 @@ class ConversationListControl(BaseController):
               WHERE ct2.conversation_id = c.id
               AND ct2.tag_key = ANY($3)
           )
+          AND (
+              $4::TEXT IS NULL 
+              OR EXISTS (
+                  SELECT 1 FROM messages m
+                  WHERE m.conversation_id = c.id
+                  AND m.body ILIKE '%' || $4::TEXT || '%'
+              )
+          )
         """
 
         # Add cursor condition if provided
-        params: list = [self.tenant_id, allowed_tags, exclude]
+        params: list = [self.tenant_id, allowed_tags, exclude, search]
         if cursor:
-            query += "  AND c.created_at < $4\n"
+            query += "  AND c.created_at < $5\n"
             params.append(cursor)
 
         query += """
