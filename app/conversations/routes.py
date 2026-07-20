@@ -135,10 +135,14 @@ async def message_list(
         "asc",
         description="Message sort order: asc for oldest-first, desc for newest-first",
     ),
+    parent_message_id: UUID | None = Query(
+        None,
+        description="Optional parent message ID to load replies; if not provided, loads top-level messages",
+    ),
     claims: TokenClaims = Depends(get_token_claims),
 ) -> MessageListPaginated:
     return await MessageListControl(claims, conversation_id).message_list(
-        cursor, limit, order
+        cursor, limit, order, parent_message_id
     )
 
 

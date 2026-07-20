@@ -21,6 +21,7 @@ class MessageListControl(BaseController, MessagePaginationMixin):
         cursor: str | None = None,
         limit: int = 50,
         order: MessageSortOrder = "asc",
+        parent_message_id: UUID | None = None,
     ) -> MessageListPaginated:
         limit = max(1, min(limit, 100))
         tags = await self._extract_tags()
@@ -41,6 +42,14 @@ class MessageListControl(BaseController, MessagePaginationMixin):
             self.tenant_id,
             self.conversation_id,
         ]
+
+        # Filter by parent_message_id if provided; otherwise load top-level messages only
+        if parent_message_id is not None:
+            query += f" AND parent_message_id = ${len(values) + 1}"
+            values.append(parent_message_id)
+        else:
+            query += f" AND parent_message_id IS NULL"
+
         if cursor:
             cursor_created_at, cursor_message_id = self.decode_message_cursor(
                 cursor, order
