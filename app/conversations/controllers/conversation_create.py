@@ -6,6 +6,7 @@ from app.conversations.models.conversation import (
     ConversationTagRead,
 )
 from app.conversations.models.message import MessageListPaginated
+from app.conversations.models.participant import ParticipantRead
 
 
 class ConversationCreateControl(BaseController):
@@ -56,6 +57,7 @@ class ConversationCreateControl(BaseController):
             next_cursor=None,
             has_more=False,
         )
+        participant = await self._create_participant_from_sender(conversation_id)
 
         return ConversationRead(
             id=conversation_id,
@@ -65,4 +67,27 @@ class ConversationCreateControl(BaseController):
             archived_at=row["archived_at"],
             tags=new_tags,
             messages=messages,
+            participants=[participant],
+        )
+
+    async def _create_participant_from_sender(
+        self, conversation_id: int
+    ) -> ParticipantRead:
+        query = (
+            "INSERT INTO participants "
+            "(conversation_id, user_id, tenant_id) "
+            "VALUES ($1, $2, $3) RETURNING *"
+        )
+        row: dict = await self.db.insert(
+            query,
+            (
+                conversation_id,
+                self.user_id,
+                self.tenant_id,
+            ),
+        )
+        return ParticipantRead(
+            user_id=row["user_id"],
+            last_read_at=row["last_read_at"],
+            joined_at=row["joined_at"],
         )
