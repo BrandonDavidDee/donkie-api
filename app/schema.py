@@ -7,6 +7,7 @@ from sqlalchemy import (
     Index,
     Integer,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
@@ -26,10 +27,12 @@ class App(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
     name = Column(Text, nullable=False)
+    webhook_secret = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     revoked_at = Column(DateTime(timezone=True), nullable=True)
 
     keys = relationship("AppKey", back_populates="app", cascade="all, delete-orphan")
+    webhooks = relationship("AppWebhook", back_populates="app", cascade="all, delete-orphan")
 
 
 class AppKey(Base):
@@ -45,6 +48,23 @@ class AppKey(Base):
     app = relationship("App", back_populates="keys")
 
     __table_args__ = (Index("idx_app_keys_app_id", "app_id"),)
+
+
+class AppWebhook(Base):
+    __tablename__ = "app_webhooks"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, server_default=func.gen_random_uuid())
+    app_id = Column(UUID(as_uuid=True), ForeignKey("apps.id", ondelete="CASCADE"), nullable=False)
+    event_type = Column(Text, nullable=False)
+    url = Column(Text, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    revoked_at = Column(DateTime(timezone=True), nullable=True)
+
+    app = relationship("App", back_populates="webhooks")
+
+    __table_args__ = (
+        UniqueConstraint("app_id", "event_type", name="uq_app_webhooks_app_event_type"),
+    )
 
 
 class Conversation(Base):
