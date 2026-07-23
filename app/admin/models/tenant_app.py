@@ -26,5 +26,6 @@ class AppRead(AppBase):
 class AppReadOnCreate(AppRead):
     webhook_secret: str
 
+
 class AppUpdate(AppBase):
     pass

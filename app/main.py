@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.admin.routes import router as admin
 from app.conf import ALLOW_ORIGIN_REGEX, ALLOW_ORIGINS
 from app.conversations.routes import router as conversations
 from app.db import db
@@ -34,6 +35,7 @@ def configure_middleware(event_run_api: FastAPI) -> None:
 
 def register_routers(event_run_api: FastAPI) -> None:
     event_run_api.include_router(root_router, prefix="")
+    event_run_api.include_router(admin, prefix="/admin")
     event_run_api.include_router(conversations, prefix="/v1/conversations")
 
 

@@ -5,11 +5,11 @@ from pydantic import BaseModel
 
 
 class AppKeyBase(BaseModel):
-    public_key: str
+    pass
 
 
 class AppKeyCreate(AppKeyBase):
-    pass
+    public_key: str
 
 
 class AppKeyRead(AppKeyBase):
@@ -20,4 +20,4 @@ class AppKeyRead(AppKeyBase):
 
 
 class AppKeyUpdate(AppKeyBase):
-    pass
+    public_key: str

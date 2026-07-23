@@ -1,5 +1,9 @@
+from uuid import UUID
+
 from fastapi import APIRouter
+
 from app.admin.controllers.app_create import AppCreateControl
+from app.admin.controllers.app_key_create import DevAppKeyCreate
 from app.admin.models.tenant_app import AppCreate, AppReadOnCreate
 
 router = APIRouter()
@@ -26,8 +30,8 @@ async def app_update():
 
 
 @router.post("/apps/{app_id}/keys")
-async def app_key_create():
-    pass
+async def app_key_create(app_id: UUID) -> dict:
+    return await DevAppKeyCreate(app_id).app_key_pair_create()
 
 
 @router.post("/apps/{app_id}/webhooks")

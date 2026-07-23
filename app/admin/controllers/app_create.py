@@ -1,7 +1,7 @@
-from app.db import Database, db
-from app.admin.models.tenant_app import AppCreate, AppReadOnCreate
-
 import secrets
+
+from app.admin.models.tenant_app import AppCreate, AppReadOnCreate
+from app.db import Database, db
 
 
 class AppCreateControl:
