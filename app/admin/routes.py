@@ -1,11 +1,13 @@
 from fastapi import APIRouter
+from app.admin.controllers.app_create import AppCreateControl
+from app.admin.models.tenant_app import AppCreate, AppReadOnCreate
 
 router = APIRouter()
 
 
 @router.post("/apps")
-async def app_create():
-    pass
+async def app_create(payload: AppCreate) -> AppReadOnCreate:
+    return await AppCreateControl().app_create(payload)
 
 
 @router.get("/apps")

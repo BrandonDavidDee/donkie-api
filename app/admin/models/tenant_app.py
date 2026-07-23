@@ -9,7 +9,6 @@ from app.admin.models.webhooks import AppWebhookRead
 
 class AppBase(BaseModel):
     name: str
-    webhook_secret: str
 
 
 class AppCreate(AppBase):
@@ -23,6 +22,9 @@ class AppRead(AppBase):
     keys: list[AppKeyRead] = Field(default_factory=list)
     webhooks: list[AppWebhookRead] = Field(default_factory=list)
 
+
+class AppReadOnCreate(AppRead):
+    webhook_secret: str
 
 class AppUpdate(AppBase):
     pass
