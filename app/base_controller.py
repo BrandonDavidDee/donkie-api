@@ -4,7 +4,7 @@ from enum import Enum
 from fastapi import HTTPException, status
 
 from app.authorization.claims import TokenUser
-from app.db import Database, db
+from app.services.database import Database, db
 
 
 class PermissionAction(str, Enum):

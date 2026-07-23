@@ -5,7 +5,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 
 from app.admin.models.app_key import AppKeyCreate, AppKeyRead
-from app.db import Database, db
+from app.services.database import Database, db
 
 
 class DevAppKeyCreate:

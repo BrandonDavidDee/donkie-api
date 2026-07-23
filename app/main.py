@@ -6,8 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.admin.routes import router as admin
 from app.conf import ALLOW_ORIGIN_REGEX, ALLOW_ORIGINS
 from app.conversations.routes import router as conversations
-from app.db import db
 from app.root_route import router as root_router
+from app.services.database import db
 
 
 @asynccontextmanager

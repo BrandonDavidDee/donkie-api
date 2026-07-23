@@ -6,7 +6,7 @@ from jwt import PyJWTError
 from pydantic import BaseModel, ValidationError
 from typing_extensions import TypedDict
 
-from app.db import db
+from app.services.database import db
 
 
 class TokenClaims(TypedDict):
