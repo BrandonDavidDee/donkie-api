@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 
-from app.authorization.claims import TokenClaims, get_token_claims, get_token_user, TokenUser
+from app.authorization.claims import TokenUser, get_token_user
 
 from .controllers.conversation_counts import (
     ConversationCountsControl,
@@ -40,9 +40,10 @@ router = APIRouter()
 
 @router.post("")
 async def conversation_create(
-    payload: ConversationCreate, claims: TokenClaims = Depends(get_token_claims)
+    payload: ConversationCreate,
+    token_user: TokenUser = Depends(get_token_user),
 ) -> ConversationRead:
-    return await ConversationCreateControl(claims).conversation_create(payload)
+    return await ConversationCreateControl(token_user).conversation_create(payload)
 
 
 @router.get("")
@@ -54,29 +55,30 @@ async def conversation_list(
     ),
     limit: int = Query(50, ge=1, le=100, description="Number of results per page"),
     search: str | None = None,
-    claims: TokenClaims = Depends(get_token_claims),
     token_user: TokenUser = Depends(get_token_user),
 ) -> ConversationListPaginated:
-    print(token_user.webhook_secret)
-    return await ConversationListControl(claims).conversation_list(
+    return await ConversationListControl(token_user).conversation_list(
         tags, exclude, cursor, limit, search
     )
 
 
 @router.post("/counts")
 async def conversation_counts(
-    payload: ConversationCountsPayload, claims: TokenClaims = Depends(get_token_claims)
+    payload: ConversationCountsPayload,
+    token_user: TokenUser = Depends(get_token_user),
 ) -> dict[str, int]:
-    return await ConversationCountsControl(claims).conversation_counts(payload)
+    return await ConversationCountsControl(token_user).conversation_counts(payload)
 
 
 @router.post("/search")
 async def conversation_search(
     payload: ConversationSearchPayload,
     offset: int = 0,
-    claims: TokenClaims = Depends(get_token_claims),
+    token_user: TokenUser = Depends(get_token_user),
 ) -> list[ConversationRead]:
-    return await ConversationSearchControl(claims).conversation_search(payload, offset)
+    return await ConversationSearchControl(token_user).conversation_search(
+        payload, offset
+    )
 
 
 @router.get("/{conversation_id}")
@@ -90,40 +92,42 @@ async def conversation_detail(
         "asc",
         description="Message sort order: asc for oldest-first, desc for newest-first",
     ),
-    claims: TokenClaims = Depends(get_token_claims),
+    token_user: TokenUser = Depends(get_token_user),
 ) -> ConversationRead:
-    return await ConversationDetailControl(claims, conversation_id).conversation_detail(
-        cursor, limit, order
-    )
+    return await ConversationDetailControl(
+        token_user, conversation_id
+    ).conversation_detail(cursor, limit, order)
 
 
 @router.post("/{conversation_id}/tags")
 async def tag_create(
     conversation_id: UUID,
     payload: ConversationTagCreate,
-    claims: TokenClaims = Depends(get_token_claims),
+    token_user: TokenUser = Depends(get_token_user),
 ) -> ConversationTagRead:
-    return await TagCreateControl(claims, conversation_id).tag_create(payload)
+    return await TagCreateControl(token_user, conversation_id).tag_create(payload)
 
 
 @router.post("/{conversation_id}/participants")
 async def participant_create(
     conversation_id: UUID,
     payload: ParticipantCreate,
-    claims: TokenClaims = Depends(get_token_claims),
+    token_user: TokenUser = Depends(get_token_user),
 ) -> ParticipantRead:
-    return await ParticipantCreateControl(claims, conversation_id).participant_create(
-        payload
-    )
+    return await ParticipantCreateControl(
+        token_user, conversation_id
+    ).participant_create(payload)
 
 
 @router.post("/{conversation_id}/messages")
 async def message_create(
     conversation_id: UUID,
     payload: MessageCreate,
-    claims: TokenClaims = Depends(get_token_claims),
+    token_user: TokenUser = Depends(get_token_user),
 ) -> MessageRead:
-    return await MessageCreateControl(claims, conversation_id).message_create(payload)
+    return await MessageCreateControl(token_user, conversation_id).message_create(
+        payload
+    )
 
 
 @router.get("/{conversation_id}/messages")
@@ -141,9 +145,9 @@ async def message_list(
         None,
         description="Optional parent message ID to load replies; if not provided, loads top-level messages",
     ),
-    claims: TokenClaims = Depends(get_token_claims),
+    token_user: TokenUser = Depends(get_token_user),
 ) -> MessageListPaginated:
-    return await MessageListControl(claims, conversation_id).message_list(
+    return await MessageListControl(token_user, conversation_id).message_list(
         cursor, limit, order, parent_message_id
     )
 
@@ -153,9 +157,9 @@ async def message_update(
     conversation_id: UUID,
     message_id: UUID,
     payload: MessageUpdate,
-    claims: TokenClaims = Depends(get_token_claims),
+    token_user: TokenUser = Depends(get_token_user),
 ) -> MessageRead:
     controller = MessageUpdateControl(
-        claims, conversation_id=conversation_id, message_id=message_id
+        token_user, conversation_id=conversation_id, message_id=message_id
     )
     return await controller.message_update(payload)

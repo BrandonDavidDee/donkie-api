@@ -1,4 +1,4 @@
-from app.authorization.claims import TokenClaims
+from app.authorization.claims import TokenUser
 from app.base_controller import BaseController
 from app.conversations.models.conversation import (
     ConversationCreate,
@@ -14,8 +14,8 @@ class ConversationCreateControl(BaseController):
     Creating a conversation requires all included tags to be in the token scopes
     """
 
-    def __init__(self, claims: TokenClaims) -> None:
-        super().__init__(claims)
+    def __init__(self, token_user: TokenUser) -> None:
+        super().__init__(token_user)
 
     async def conversation_create(
         self, payload: ConversationCreate

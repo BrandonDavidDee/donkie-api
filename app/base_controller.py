@@ -3,7 +3,7 @@ from enum import Enum
 
 from fastapi import HTTPException, status
 
-from app.authorization.claims import TokenClaims
+from app.authorization.claims import TokenUser
 from app.db import Database, db
 
 
@@ -16,11 +16,12 @@ class PermissionAction(str, Enum):
 
 
 class BaseController(ABC):
-    def __init__(self, claims: TokenClaims) -> None:
-        self.tenant_id = claims["tenant_id"]
-        self.user_id = claims["user_id"]
-        self.display_name = claims["display_name"]
-        self.scope = claims["scope"]
+    def __init__(self, token_user: TokenUser) -> None:
+        self.tenant_id = token_user.tenant_id
+        self.user_id = token_user.user_id
+        self.display_name = token_user.display_name
+        self.scope = token_user.scope
+        self.webhook_secret = token_user.webhook_secret
         self.db: Database = db
 
     def can_create_with_tags(self, tags: list[str]) -> bool:

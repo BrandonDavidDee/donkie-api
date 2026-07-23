@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from app.authorization.claims import TokenClaims
+from app.authorization.claims import TokenUser
 from app.base_controller import BaseController, PermissionAction
 from app.conversations.models.message import (
     MessageCreate,
@@ -9,8 +9,8 @@ from app.conversations.models.message import (
 
 
 class MessageCreateControl(BaseController):
-    def __init__(self, claims: TokenClaims, conversation_id: UUID) -> None:
-        super().__init__(claims)
+    def __init__(self, token_user: TokenUser, conversation_id: UUID) -> None:
+        super().__init__(token_user)
         self.conversation_id = conversation_id
 
     async def message_create(

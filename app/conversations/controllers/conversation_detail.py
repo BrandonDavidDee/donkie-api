@@ -3,7 +3,7 @@ from uuid import UUID
 
 from asyncpg import Record
 
-from app.authorization.claims import TokenClaims
+from app.authorization.claims import TokenUser
 from app.base_controller import BaseController, PermissionAction
 from app.conversations.controllers.message_pagination import (
     MessagePaginationMixin,
@@ -15,8 +15,8 @@ from app.conversations.models.tag import ConversationTagRead
 
 
 class ConversationDetailControl(BaseController, MessagePaginationMixin):
-    def __init__(self, claims: TokenClaims, conversation_id: UUID) -> None:
-        super().__init__(claims)
+    def __init__(self, token_user: TokenUser, conversation_id: UUID) -> None:
+        super().__init__(token_user)
         self.conversation_id = conversation_id
 
     @staticmethod

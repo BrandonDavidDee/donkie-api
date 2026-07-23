@@ -1,7 +1,7 @@
 from asyncpg import Record
 from pydantic import BaseModel
 
-from app.authorization.claims import TokenClaims
+from app.authorization.claims import TokenUser
 from app.base_controller import BaseController, PermissionAction
 from app.conversations.models.conversation import ConversationRead
 
@@ -25,8 +25,8 @@ class ConversationSearchControl(BaseController):
     The query also confirms that the user's scope includes the conversation tags
     """
 
-    def __init__(self, claims: TokenClaims) -> None:
-        super().__init__(claims)
+    def __init__(self, token_user: TokenUser) -> None:
+        super().__init__(token_user)
 
     @staticmethod
     def _escape_ilike(value: str) -> str:

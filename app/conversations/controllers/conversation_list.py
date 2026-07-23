@@ -2,7 +2,7 @@ from uuid import UUID
 
 from asyncpg import Record
 
-from app.authorization.claims import TokenClaims
+from app.authorization.claims import TokenUser
 from app.base_controller import BaseController, PermissionAction
 from app.conversations.models.conversation import (
     ConversationListPaginated,
@@ -12,8 +12,8 @@ from app.conversations.models.tag import ConversationTagRead
 
 
 class ConversationListControl(BaseController):
-    def __init__(self, claims: TokenClaims) -> None:
-        super().__init__(claims)
+    def __init__(self, token_user: TokenUser) -> None:
+        super().__init__(token_user)
 
     async def conversation_list(
         self,

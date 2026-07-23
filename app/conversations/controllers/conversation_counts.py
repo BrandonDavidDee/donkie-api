@@ -1,7 +1,7 @@
 from asyncpg import Record
 from pydantic import BaseModel
 
-from app.authorization.claims import TokenClaims
+from app.authorization.claims import TokenUser
 from app.base_controller import BaseController
 
 
@@ -11,8 +11,8 @@ class ConversationCountsPayload(BaseModel):
 
 
 class ConversationCountsControl(BaseController):
-    def __init__(self, claims: TokenClaims) -> None:
-        super().__init__(claims)
+    def __init__(self, token_user: TokenUser) -> None:
+        super().__init__(token_user)
 
     async def conversation_counts(
         self,
