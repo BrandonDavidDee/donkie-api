@@ -21,7 +21,6 @@ class BaseController(ABC):
         self.user_id = token_user.user_id
         self.display_name = token_user.display_name
         self.scope = token_user.scope
-        self.webhook_secret = token_user.webhook_secret
         self.db: Database = db
 
     def can_create_with_tags(self, tags: list[str]) -> bool:

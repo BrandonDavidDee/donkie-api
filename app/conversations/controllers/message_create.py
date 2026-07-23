@@ -1,5 +1,11 @@
+import hashlib
+import hmac
+import json
 from uuid import UUID
 
+from asyncpg import Record
+
+from app.admin.models.webhooks import AppWebhookEvent
 from app.authorization.claims import TokenUser
 from app.base_controller import BaseController, PermissionAction
 from app.conversations.models.message import (
@@ -12,11 +18,41 @@ class MessageCreateControl(BaseController):
     def __init__(self, token_user: TokenUser, conversation_id: UUID) -> None:
         super().__init__(token_user)
         self.conversation_id = conversation_id
+        self.app_id = token_user.app_id
+        self.webhook_secret = token_user.webhook_secret
+
+    async def get_webhook(self, payload: MessageCreate) -> None:
+        # TODO: this gets put in a background task
+        query = "SELECT url FROM app_webhooks WHERE app_id = $1 AND event_type = $2 AND revoked_at IS NULL"
+        values = (
+            self.app_id,
+            AppWebhookEvent.MESSAGE_CREATED.value,
+        )
+        row: Record | None = await self.db.select_one(query, values)
+        if row is None:
+            return
+        webhook_url = row["url"]
+        # body = json.dumps(payload, separators=(",", ":")).encode()
+        body = json.dumps(payload, default=str).encode()
+        signature = hmac.new(
+            self.webhook_secret.encode(), body, hashlib.sha256
+        ).hexdigest()
+        # requests.post(
+        #     webhook_url,
+        #     data=body,
+        #     headers={
+        #         "Content-Type": "application/json",
+        #         "X-Donkie-Signature": signature,
+        #     },
+        #     timeout=5,
+        # )
 
     async def message_create(
         self,
         payload: MessageCreate,
     ) -> MessageRead:
+        await self.get_webhook(payload)
+
         tags, participants = await self._extract_tags_and_participants()
 
         allowed_tags = [

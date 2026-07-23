@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import jwt
 from fastapi import Depends, Header, HTTPException, status
 from jwt import PyJWTError
@@ -16,6 +18,7 @@ class TokenClaims(TypedDict):
 
 
 class TokenUser(BaseModel):
+    app_id: UUID
     tenant_id: str
     user_id: str
     display_name: str
@@ -59,6 +62,7 @@ async def get_token_user(token: str = Depends(parse_auth_header)) -> TokenUser:
             raise HTTPException(403, "Token app/tenant mismatch")
 
         return TokenUser(
+            app_id=app_id,
             tenant_id=claims["tenant_id"],
             user_id=claims["user_id"],
             display_name=claims["display_name"],
