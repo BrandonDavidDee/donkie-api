@@ -1,5 +1,3 @@
-import hashlib
-import hmac
 import json
 from uuid import UUID
 
@@ -12,6 +10,7 @@ from app.conversations.models.message import (
     MessageCreate,
     MessageRead,
 )
+from app.services.webhooks import WebhookService
 
 
 class MessageCreateControl(BaseController):
@@ -20,9 +19,9 @@ class MessageCreateControl(BaseController):
         self.conversation_id = conversation_id
         self.app_id = token_user.app_id
         self.webhook_secret = token_user.webhook_secret
+        self.webhooks = WebhookService()
 
     async def get_webhook(self, payload: MessageCreate) -> None:
-        # TODO: this gets put in a background task
         query = "SELECT url FROM app_webhooks WHERE app_id = $1 AND event_type = $2 AND revoked_at IS NULL"
         values = (
             self.app_id,
@@ -32,20 +31,9 @@ class MessageCreateControl(BaseController):
         if row is None:
             return
         webhook_url = row["url"]
-        # body = json.dumps(payload, separators=(",", ":")).encode()
+
         body = json.dumps(payload, default=str).encode()
-        signature = hmac.new(
-            self.webhook_secret.encode(), body, hashlib.sha256
-        ).hexdigest()
-        # requests.post(
-        #     webhook_url,
-        #     data=body,
-        #     headers={
-        #         "Content-Type": "application/json",
-        #         "X-Donkie-Signature": signature,
-        #     },
-        #     timeout=5,
-        # )
+        await self.webhooks.process_webhook(webhook_url, body, self.webhook_secret)
 
     async def message_create(
         self,
