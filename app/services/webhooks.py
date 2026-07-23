@@ -1,11 +1,9 @@
 import hashlib
 import hmac
 from enum import Enum
-from typing import Any
 
 import httpx
 from asyncpg import Record
-from fastapi import HTTPException, status
 
 from app.authorization.claims import TokenUser
 from app.logging_config import logger
@@ -38,7 +36,18 @@ class WebhookService:
         signature = hmac.new(
             self.webhook_secret.encode(), encoded_body, hashlib.sha256
         ).hexdigest()
-        await self._do_request(url=webhook_url, body=encoded_body, signature=signature)
+
+        try:
+            await self._do_request(
+                url=webhook_url, body=encoded_body, signature=signature
+            )
+        except Exception:
+            logger.exception(
+                "Unhandled webhook delivery failure: app_id=%s event=%s url=%s",
+                self.app_id,
+                event.value,
+                webhook_url,
+            )
 
     @staticmethod
     async def _do_request(
@@ -46,7 +55,7 @@ class WebhookService:
         url: str,
         body: bytes,
         signature: str,
-    ) -> int | Any:
+    ) -> bool:
         async with httpx.AsyncClient(timeout=5) as client:
             try:
                 response = await client.post(
@@ -57,26 +66,23 @@ class WebhookService:
                         "X-Donkie-Signature": signature,
                     },
                 )
-                response.raise_for_status()
-                try:
-                    return response.json()
-                except ValueError:
-                    return response.text if response.text else None
+                if response.is_success:
+                    return True
 
-            except httpx.HTTPStatusError as e:
-                logger.error(
-                    f"Remote API error: {url} - {e.response.status_code} - {e.response.text}"
+                logger.warning(
+                    "Webhook endpoint rejected callback: url=%s status_code=%s response=%s",
+                    url,
+                    response.status_code,
+                    response.text if response.text else "<empty>",
                 )
-                raise HTTPException(
-                    status_code=e.response.status_code,
-                    detail=f"Remote API error: {e.response.text}",
+                return False
+            except httpx.RequestError as exc:
+                logger.warning(
+                    "Webhook request failed: url=%s error=%s",
+                    url,
+                    str(exc),
                 )
-            except httpx.RequestError as e:
-                logger.error(f"Remote API request failed: {url} - {str(e)}")
-                raise HTTPException(
-                    status_code=status.HTTP_502_BAD_GATEWAY,
-                    detail="Unable to reach remote service",
-                )
-            except Exception as e:
-                logger.error("Unexpected error in Http Client")
-                raise HTTPException(status_code=500, detail="Internal server error")
+                return False
+            except Exception:
+                logger.exception("Unexpected webhook client error: url=%s", url)
+                return False
