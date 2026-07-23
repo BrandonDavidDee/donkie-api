@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 
-from app.authorization.claims import TokenClaims, get_token_claims
+from app.authorization.claims import TokenClaims, get_token_claims, get_token_user, TokenUser
 
 from .controllers.conversation_counts import (
     ConversationCountsControl,
@@ -55,7 +55,9 @@ async def conversation_list(
     limit: int = Query(50, ge=1, le=100, description="Number of results per page"),
     search: str | None = None,
     claims: TokenClaims = Depends(get_token_claims),
+    token_user: TokenUser = Depends(get_token_user),
 ) -> ConversationListPaginated:
+    print(token_user.webhook_secret)
     return await ConversationListControl(claims).conversation_list(
         tags, exclude, cursor, limit, search
     )
