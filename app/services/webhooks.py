@@ -8,6 +8,7 @@ from asyncpg import Record
 from fastapi import HTTPException, status
 
 from app.authorization.claims import TokenUser
+from app.logging_config import logger
 from app.services.database import Database, db
 
 
@@ -63,10 +64,7 @@ class WebhookService:
                     return response.text if response.text else None
 
             except httpx.HTTPStatusError as e:
-                # logger.error(
-                #     f"Remote API error: {method} {url} - {e.response.status_code} - {e.response.text}"
-                # )
-                print(
+                logger.error(
                     f"Remote API error: {url} - {e.response.status_code} - {e.response.text}"
                 )
                 raise HTTPException(
@@ -74,13 +72,11 @@ class WebhookService:
                     detail=f"Remote API error: {e.response.text}",
                 )
             except httpx.RequestError as e:
-                print(f"Remote API request failed: {url} - {str(e)}")
-                # logger.error(f"Remote API request failed: {method} {url} - {str(e)}")
+                logger.error(f"Remote API request failed: {url} - {str(e)}")
                 raise HTTPException(
                     status_code=status.HTTP_502_BAD_GATEWAY,
                     detail="Unable to reach remote service",
                 )
             except Exception as e:
-                print("Unexpected error in Http Client")
-                # logger.error("Unexpected error in Http Client")
+                logger.error("Unexpected error in Http Client")
                 raise HTTPException(status_code=500, detail="Internal server error")

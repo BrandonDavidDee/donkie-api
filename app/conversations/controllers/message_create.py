@@ -1,6 +1,8 @@
 import json
 from uuid import UUID
 
+from fastapi import BackgroundTasks
+
 from app.authorization.claims import TokenUser
 from app.base_controller import BaseController, PermissionAction
 from app.conversations.models.message import (
@@ -11,8 +13,11 @@ from app.services.webhooks import WebhookEvent, WebhookService
 
 
 class MessageCreateControl(BaseController):
-    def __init__(self, token_user: TokenUser, conversation_id: UUID) -> None:
+    def __init__(
+        self, token_user: TokenUser, conversation_id: UUID, bg_tasks: BackgroundTasks
+    ) -> None:
         super().__init__(token_user)
+        self.bg_tasks = bg_tasks
         self.conversation_id = conversation_id
         self.webhooks = WebhookService(token_user)
 
@@ -24,8 +29,6 @@ class MessageCreateControl(BaseController):
         self,
         payload: MessageCreate,
     ) -> MessageRead:
-        await self.handle_webhook(payload)
-
         tags, participants = await self._extract_tags_and_participants()
 
         allowed_tags = [
@@ -55,6 +58,8 @@ class MessageCreateControl(BaseController):
             payload.body,
         )
         row: dict = await self.db.insert(query, values)
+
+        self.bg_tasks.add_task(self.handle_webhook, payload)
 
         return MessageRead(
             id=row["id"],

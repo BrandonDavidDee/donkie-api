@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, Query
 
 from app.authorization.claims import TokenUser, get_token_user
 
@@ -123,11 +123,12 @@ async def participant_create(
 async def message_create(
     conversation_id: UUID,
     payload: MessageCreate,
+    bg_tasks: BackgroundTasks,
     token_user: TokenUser = Depends(get_token_user),
 ) -> MessageRead:
-    return await MessageCreateControl(token_user, conversation_id).message_create(
-        payload
-    )
+    return await MessageCreateControl(
+        token_user, conversation_id, bg_tasks
+    ).message_create(payload)
 
 
 @router.get("/{conversation_id}/messages")
