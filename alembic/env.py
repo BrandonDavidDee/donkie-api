@@ -31,14 +31,19 @@ target_metadata = schema.Base.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+IS_DEV = True
 
+DATABASE_USERNAME = os.getenv("DATABASE_USERNAME") if IS_DEV else os.getenv("MIGRATION_DATABASE_USERNAME")
+DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD") if IS_DEV else os.getenv("MIGRATION_DATABASE_PASSWORD")
+DATABASE_HOST = os.getenv("DATABASE_HOST") if IS_DEV else os.getenv("MIGRATION_DATABASE_HOST")
+DATABASE_NAME = os.getenv("DATABASE_NAME") if IS_DEV else os.getenv("MIGRATION_DATABASE_NAME")
 
 def get_url():
     return "postgresql+asyncpg://%s:%s@%s:5432/%s" % (
-        os.getenv("DATABASE_USERNAME"),
-        os.getenv("DATABASE_PASSWORD"),
-        os.getenv("DATABASE_HOST"),
-        os.getenv("DATABASE_NAME"),
+        DATABASE_USERNAME,
+        DATABASE_PASSWORD,
+        DATABASE_HOST,
+        DATABASE_NAME,
     )
 
 
