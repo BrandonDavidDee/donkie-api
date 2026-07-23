@@ -4,22 +4,40 @@ from enum import Enum
 from typing import Any
 
 import httpx
+from asyncpg import Record
 from fastapi import HTTPException, status
 
-# from app.logging_config import logger
+from app.authorization.claims import TokenUser
+from app.services.database import Database, db
 
 
-class HttpMethod(str, Enum):
-    GET = "GET"
-    POST = "POST"
-    PATCH = "PATCH"
-    DELETE = "DELETE"
+class WebhookEvent(str, Enum):
+    MESSAGE_CREATED = "message.created"
+    PARTICIPANT_ADDED = "participant.added"
 
 
 class WebhookService:
-    async def process_webhook(self, webhook_url: str, body: bytes, webhook_secret: str):
-        signature = hmac.new(webhook_secret.encode(), body, hashlib.sha256).hexdigest()
-        return await self._do_request(url=webhook_url, body=body, signature=signature)
+    def __init__(self, token_user: TokenUser):
+        self.db: Database = db
+        self.app_id = token_user.app_id
+        self.webhook_secret = token_user.webhook_secret
+
+    async def process_webhook(self, event: WebhookEvent, body: str) -> None:
+        query = "SELECT url FROM app_webhooks WHERE app_id = $1 AND event_type = $2 AND revoked_at IS NULL"
+        values = (
+            self.app_id,
+            event.value,
+        )
+        row: Record | None = await self.db.select_one(query, values)
+        if row is None:
+            return
+        webhook_url = row["url"]
+
+        encoded_body = body.encode()
+        signature = hmac.new(
+            self.webhook_secret.encode(), encoded_body, hashlib.sha256
+        ).hexdigest()
+        await self._do_request(url=webhook_url, body=encoded_body, signature=signature)
 
     @staticmethod
     async def _do_request(

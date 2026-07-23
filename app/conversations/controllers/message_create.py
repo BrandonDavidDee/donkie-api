@@ -1,45 +1,30 @@
 import json
 from uuid import UUID
 
-from asyncpg import Record
-
-from app.admin.models.webhooks import AppWebhookEvent
 from app.authorization.claims import TokenUser
 from app.base_controller import BaseController, PermissionAction
 from app.conversations.models.message import (
     MessageCreate,
     MessageRead,
 )
-from app.services.webhooks import WebhookService
+from app.services.webhooks import WebhookEvent, WebhookService
 
 
 class MessageCreateControl(BaseController):
     def __init__(self, token_user: TokenUser, conversation_id: UUID) -> None:
         super().__init__(token_user)
         self.conversation_id = conversation_id
-        self.app_id = token_user.app_id
-        self.webhook_secret = token_user.webhook_secret
-        self.webhooks = WebhookService()
+        self.webhooks = WebhookService(token_user)
 
-    async def get_webhook(self, payload: MessageCreate) -> None:
-        query = "SELECT url FROM app_webhooks WHERE app_id = $1 AND event_type = $2 AND revoked_at IS NULL"
-        values = (
-            self.app_id,
-            AppWebhookEvent.MESSAGE_CREATED.value,
-        )
-        row: Record | None = await self.db.select_one(query, values)
-        if row is None:
-            return
-        webhook_url = row["url"]
-
-        body = json.dumps(payload, default=str).encode()
-        await self.webhooks.process_webhook(webhook_url, body, self.webhook_secret)
+    async def handle_webhook(self, payload: MessageCreate) -> None:
+        body = json.dumps(payload, default=str)
+        await self.webhooks.process_webhook(WebhookEvent.MESSAGE_CREATED, body)
 
     async def message_create(
         self,
         payload: MessageCreate,
     ) -> MessageRead:
-        await self.get_webhook(payload)
+        await self.handle_webhook(payload)
 
         tags, participants = await self._extract_tags_and_participants()
 
